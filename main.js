@@ -6,7 +6,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /* ============ Three.js: morphing particle constellation ============ */
 const isMobile = matchMedia('(max-width: 760px)').matches;
-const N = isMobile ? 7000 : 16000;
+const N = isMobile ? 12000 : 16000;
 const canvas = document.getElementById('bg');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -18,17 +18,50 @@ scene.fog = new THREE.FogExp2(0x000000, 0.028);
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
 camera.position.set(0, 0, 22);
 
-// Cinematic bloom on capable (non-mobile) devices
-let composer = null, bloomPass = null;
-if (!isMobile) {
-  composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12);
-  composer.addPass(bloomPass);
-  composer.addPass(new OutputPass());
-}
+// Cinematic bloom everywhere. Phones run the post-processing chain at 1x pixel ratio and
+// drop it automatically if the frame rate can't keep up.
+let composer = new EffectComposer(renderer), bloomPass = null;
+if (isMobile) composer.setPixelRatio(1);
+composer.addPass(new RenderPass(scene, camera));
+bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+const BLOOM = isMobile ? 0.95 : 0.75;
 
 const rand = (a, b) => a + Math.random() * (b - a);
+
+/* ============ Immersive scroll: sections as 3D layers you fly through ============ */
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const layers = [...document.querySelectorAll('main > section')].map(sec => {
+  const layer = document.createElement('div'); layer.className = 'layer';
+  [...sec.children].forEach(c => { if (!c.matches('footer, .scroll-hint')) layer.appendChild(c); });
+  sec.insertBefore(layer, sec.firstChild);
+  return { sec, layer, top: 0, h: 0 };
+});
+function measure() { layers.forEach(l => { l.top = l.sec.offsetTop; l.h = l.sec.offsetHeight; }); }
+measure(); addEventListener('resize', measure); addEventListener('load', measure); setInterval(measure, 2000);
+function updateLayers() {
+  if (reducedMotion) return;
+  const vh = innerHeight, sy = window.scrollY;
+  for (const l of layers) {
+    const top = l.top - sy, bottom = top + l.h;
+    if (bottom < -vh * 0.3 || top > vh * 1.3) continue;
+    const enter = l.top === 0 ? 1 : Math.min(Math.max((vh - top) / (vh * 0.75), 0), 1);
+    const exit = Math.min(Math.max(1 - bottom / (vh * 0.55), 0), 1);
+    const e = 1 - Math.pow(1 - enter, 3), x = exit * exit;
+    l.sec.style.perspectiveOrigin = `50% ${Math.round(vh / 2 - top)}px`;
+    l.layer.style.transform = e > 0.999 && x < 0.001 ? 'none'
+      : `translate3d(0,${((1 - e) * 70).toFixed(1)}px,${(-(1 - e) * 280 + x * 220).toFixed(1)}px) rotateX(${((1 - e) * 12 - x * 6).toFixed(2)}deg)`;
+  }
+}
+// Inertial smooth scrolling on desktop (Lenis); phones keep native momentum scrolling
+let lenis = null;
+if (window.Lenis && !reducedMotion && !matchMedia('(hover: none)').matches) {
+  lenis = new window.Lenis({ lerp: 0.085, anchors: true });
+  const lraf = t => { lenis.raf(t); requestAnimationFrame(lraf); };
+  requestAnimationFrame(lraf);
+}
+const scrollToEl = el => lenis ? lenis.scrollTo(el, { duration: 1.6 }) : el.scrollIntoView({ behavior: 'smooth' });
 
 // ---- Shape generators (each returns Float32Array N*3) ----
 function textShape(str) {
@@ -190,7 +223,7 @@ geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
 const mat = new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
-  uniforms: { uTime: { value: 0 }, uSize: { value: (isMobile ? 34 : 44) * renderer.getPixelRatio() } },
+  uniforms: { uTime: { value: 0 }, uSize: { value: (isMobile ? 46 : 44) * renderer.getPixelRatio() } },
   vertexShader: `
     attribute float seed; varying vec3 vColor; varying float vA; uniform float uTime; uniform float uSize;
     void main(){
@@ -216,12 +249,17 @@ const world = new THREE.Group(); // user-controlled orbit (drag / swipe) wraps t
 world.add(points);
 scene.add(world);
 
-// Background star field
-const sg = new THREE.BufferGeometry(), sp = new Float32Array(2500 * 3);
-for (let i = 0; i < sp.length; i++) sp[i] = rand(-90, 90);
-sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.08, color: 0x8d8a84, transparent: true, opacity: 0.6 }));
-scene.add(stars);
+// Background star field that flies toward the camera; scrolling stretches it into warp streaks
+const STAR_N = isMobile ? 1100 : 2200;
+const starPos = new Float32Array(STAR_N * 3), streakPos = new Float32Array(STAR_N * 6);
+for (let i = 0; i < STAR_N; i++) { starPos[i * 3] = rand(-70, 70); starPos[i * 3 + 1] = rand(-45, 45); starPos[i * 3 + 2] = rand(-140, 20); }
+const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, color: 0x8d8a84, transparent: true, opacity: 0.65 }));
+const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(streakPos, 3));
+const streakMat = new THREE.LineBasicMaterial({ color: 0xf6e7c8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+const streaks = new THREE.LineSegments(lg, streakMat);
+scene.add(stars, streaks);
+let sv = 0, prevSY = window.scrollY; // smoothed scroll velocity (px / frame)
 
 let burst = 0, hole = 0, holing = false;
 let target = null, currentKey = 'text', morphT = 0;
@@ -238,7 +276,7 @@ function setShape(key) {
 
 // ---- Animation loop ----
 const clock = new THREE.Clock();
-let scrollY = 0, press = null, fps = 60, fpsFrames = 0, fpsT = performance.now();
+let scrollY = 0, press = null, fps = 60, fpsFrames = 0, fpsT = performance.now(), lowFps = 0;
 function tick() {
   const t = clock.getElapsedTime(), now = performance.now();
   mat.uniforms.uTime.value = t;
@@ -246,12 +284,16 @@ function tick() {
   const ease = 0.035 + morphT * 0.05;
 
   fpsFrames++;
-  if (now - fpsT >= 500) { fps = Math.round(fpsFrames * 1000 / (now - fpsT)); fpsFrames = 0; fpsT = now; }
+  if (now - fpsT >= 500) {
+    fps = Math.round(fpsFrames * 1000 / (now - fpsT)); fpsFrames = 0; fpsT = now;
+    if (composer && isMobile && t > 6) { lowFps = fps < 34 ? lowFps + 1 : 0; if (lowFps >= 4) { composer = null; bloomPass = null; } }
+  }
 
   // long-press on empty space → black hole
-  if (press && !holing && press.moved < 12 && now - press.t > 380) { holing = true; navigator.vibrate?.(15); SA.tone(70, 1.6, 'sawtooth', 0.05, 40); }
+  if (press && !holing && press.moved < 12 && now - press.t > 380) { holing = true; navigator.vibrate?.(15); }
   hole = holing ? Math.min(hole + 0.012, 1) : Math.max(hole - 0.06, 0);
-  if (bloomPass) bloomPass.strength = 0.75 + hole * 0.9 + burst * 0.5;
+  if (bloomPass) bloomPass.strength = BLOOM + hole * 0.9 + burst * 0.5;
+  SA.onHole?.(hole);
 
   ray.setFromCamera(aim, camera);
   ray.ray.intersectPlane(plane, mouseWorld);
@@ -295,7 +337,23 @@ function tick() {
   camera.position.x += (mouse.x * 1.5 - camera.position.x) * 0.03;
   camera.position.y += (mouse.y * 1.0 - camera.position.y) * 0.03;
   camera.lookAt(0, 0, 0);
-  stars.rotation.y = t * 0.01; stars.rotation.x = scrollY * 0.00005;
+  // warp: stars rush forward with scroll velocity; FOV widens like acceleration
+  const sy = window.scrollY; sv += ((sy - prevSY) - sv) * 0.18; prevSY = sy;
+  const spd = 0.012 + sv * 0.05, len = Math.min(Math.abs(sv) * 0.35, 12) * Math.sign(spd);
+  for (let i = 0; i < STAR_N; i++) {
+    const k = i * 3; let z = starPos[k + 2] + spd;
+    if (z > 22) z -= 162; else if (z < -140) z += 162;
+    starPos[k + 2] = z;
+    const j = i * 6;
+    streakPos[j] = streakPos[j + 3] = starPos[k]; streakPos[j + 1] = streakPos[j + 4] = starPos[k + 1];
+    streakPos[j + 2] = z; streakPos[j + 5] = z - len;
+  }
+  sg.attributes.position.needsUpdate = true; lg.attributes.position.needsUpdate = true;
+  streakMat.opacity = Math.min(Math.abs(sv) / 14, 0.75);
+  const fov = 55 + Math.min(Math.abs(sv) * 0.35, 20);
+  if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * 0.1; camera.updateProjectionMatrix(); }
+  world.rotation.x += Math.max(-0.25, Math.min(0.25, sv * 0.004));
+  updateLayers();
 
   composer ? composer.render() : renderer.render(scene, camera);
   requestAnimationFrame(tick);
@@ -318,6 +376,7 @@ addEventListener('pointermove', e => {
   const dx = e.clientX - press.lx, dy = e.clientY - press.ly;
   press.lx = e.clientX; press.ly = e.clientY; press.moved += Math.abs(dx) + Math.abs(dy);
   if (press.moved > 12 && !holing) { userVel.x = dx * 0.0045; if (e.pointerType === 'mouse') userVel.y = dy * 0.003; }
+  if (press.moved > 160 && !holing && !press.spun) { press.spun = true; SA.emit('spin'); }
 });
 addEventListener('pointerleave', () => { mouse.set(9, 9); aim.set(9, 9); });
 addEventListener('pointerdown', e => {
@@ -330,8 +389,8 @@ addEventListener('pointerdown', e => {
 function endPress(cancelled) {
   if (!press) return;
   const quick = performance.now() - press.t < 350 && press.moved < 12;
-  if (holing) { burst = 1 + hole * 1.2; navigator.vibrate?.([20, 30, 60]); SA.tone(48, 0.9, 'sine', 0.22, 180); }
-  else if (quick && !cancelled) { burst = 1; navigator.vibrate?.(25); SA.tone(220, 0.35, 'triangle', 0.08, 90); }
+  if (holing) { burst = 1 + hole * 1.2; navigator.vibrate?.([20, 30, 60]); SA.boom(true); SA.emit('hole'); }
+  else if (quick && !cancelled) { burst = 1; navigator.vibrate?.(25); SA.boom(false); SA.emit('burst'); }
   holing = false; press = null;
   if (matchMedia('(hover: none)').matches) aimT = setTimeout(() => aim.set(9, 9), 900);
 }
@@ -350,10 +409,16 @@ if (matchMedia('(hover: none)').matches) {
 }
 
 // Shared hooks for extras.js (live panel, holo card, mini-game)
+const bus = new EventTarget();
 const SA = window.SA = {
+  emit: n => bus.dispatchEvent(new Event(n)),
+  on: (n, f) => bus.addEventListener(n, f),
+  boom() {}, pluck() {},
   N, get fps() { return fps; }, renderer,
   setShape: k => setShape(k),
   shockwave: () => { aim.set(0, 0); burst = 1.4; },
+  scrollTo: el => scrollToEl(el),
+  remeasure: () => measure(),
   tone(freq, dur = 0.3, type = 'sine', vol = 0.1, slideTo) {
     if (!soundOn || !actx) return;
     const t0 = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
@@ -418,8 +483,9 @@ setInterval(() => { gEl.classList.add('out'); setTimeout(() => { gi = (gi + 1) %
 
 const phrases = ['enterprise BI interfaces.', 'secure Spring Boot APIs.', 'blazing-fast React apps.', 'accessible, WCAG-ready UIs.', 'AI-powered workflows.'];
 let pi2 = 0, ci = 0, del = false; const tEl = document.getElementById('typer');
+const phrasesAr = ['واجهات ذكاء أعمال للمؤسسات.', 'واجهات برمجية آمنة بـ Spring Boot.', 'تطبيقات React فائقة السرعة.', 'واجهات سهلة الوصول وفق WCAG.', 'سير عمل مدعومًا بالذكاء الاصطناعي.'];
 (function type() {
-  const w = phrases[pi2];
+  const w = (document.documentElement.lang === 'ar' ? phrasesAr : phrases)[pi2 % phrases.length];
   tEl.textContent = w.slice(0, ci);
   if (!del && ci++ >= w.length) { del = true; return setTimeout(type, 1600); }
   if (del && ci-- <= 0) { del = false; pi2 = (pi2 + 1) % phrases.length; ci = 0; }
@@ -479,7 +545,7 @@ function run(line) {
 function toggleTerm(open = !term.classList.contains('open')) {
   term.classList.toggle('open', open);
   term.setAttribute('aria-hidden', !open);
-  if (open) { if (!out.innerHTML) print('Welcome to <span class="g">syed-os</span> v1.0 — type <span class="g">help</span>'); setTimeout(() => inp.focus(), 300); }
+  if (open) { SA.emit('term'); if (!out.innerHTML) print('Welcome to <span class="g">syed-os</span> v1.0 — type <span class="g">help</span>'); setTimeout(() => inp.focus(), 300); }
 }
 addEventListener('keydown', e => {
   const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
@@ -491,61 +557,226 @@ addEventListener('keydown', e => {
 inp.addEventListener('keydown', e => { if (e.key === 'Enter') { run(inp.value); inp.value = ''; } });
 document.getElementById('term-x').onclick = () => toggleTerm(false);
 
-/* ============ Ambient sound (WebAudio synth, off by default) ============ */
-let actx = null, master = null, soundOn = false;
+/* ============ Interactive sound (WebAudio, off by default) ============ */
+// A drone in a reverb "space". The cursor / finger strums a pentatonic harp across the screen,
+// scrolling opens the filter, the black hole rumbles, and UI elements chime on hover.
+let actx = null, master = null, wet = null, echo = null, lp = null, rumble = null, rumbleG = null, soundOn = false;
+const SCALE = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51];
+function impulse(sec, decay) {
+  const len = actx.sampleRate * sec, b = actx.createBuffer(2, len, actx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+  return b;
+}
 function initAudio() {
   actx = new (window.AudioContext || window.webkitAudioContext)();
-  master = actx.createGain(); master.gain.value = 0; master.connect(actx.destination);
-  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.connect(master);
-  [55, 82.4, 110.3, 164.8].forEach((f, i) => { // A-minor drone with slow detune shimmer
+  const comp = actx.createDynamicsCompressor(); comp.connect(actx.destination);
+  master = actx.createGain(); master.gain.value = 0; master.connect(comp);
+  const verb = actx.createConvolver(); verb.buffer = impulse(3.5, 2.8); verb.connect(master);
+  wet = actx.createGain(); wet.gain.value = 0.55; wet.connect(verb);
+  echo = actx.createDelay(1); const fb = actx.createGain(); echo.delayTime.value = 0.33; fb.gain.value = 0.35;
+  echo.connect(fb); fb.connect(echo); echo.connect(wet);
+  lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 4; lp.connect(master); lp.connect(wet);
+  [55, 82.4, 110, 164.8].forEach((f, i) => { // A-minor drone with slow detune shimmer
     const o = actx.createOscillator(), g = actx.createGain(), l = actx.createOscillator(), lg = actx.createGain();
-    o.type = i % 2 ? 'triangle' : 'sine'; o.frequency.value = f; g.gain.value = 0.18 / (i + 1);
-    l.frequency.value = 0.07 + i * 0.03; lg.gain.value = 1.8; l.connect(lg); lg.connect(o.detune);
+    o.type = i % 2 ? 'triangle' : 'sawtooth'; o.frequency.value = f; g.gain.value = 0.12 / (i + 1);
+    l.frequency.value = 0.07 + i * 0.03; lg.gain.value = 2.5; l.connect(lg); lg.connect(o.detune);
     o.connect(g); g.connect(lp); o.start(); l.start();
   });
+  rumble = actx.createOscillator(); rumble.type = 'sawtooth'; rumble.frequency.value = 40;
+  const rl = actx.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 160;
+  rumbleG = actx.createGain(); rumbleG.gain.value = 0;
+  rumble.connect(rl); rl.connect(rumbleG); rumbleG.connect(master); rumbleG.connect(wet); rumble.start();
 }
-// Pentatonic chime per shape
+function voice(freq, { dur = 1.4, type = 'triangle', vol = 0.08, slideTo, delay = false } = {}) {
+  if (!soundOn || !actx) return;
+  const t0 = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t0);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(master); g.connect(wet); if (delay) g.connect(echo);
+  o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function noiseBurst(dur, vol, freq) {
+  if (!soundOn || !actx) return;
+  const t0 = actx.currentTime, len = actx.sampleRate * dur, b = actx.createBuffer(1, len, actx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = actx.createBufferSource(), bp = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = b; bp.type = 'bandpass'; bp.frequency.setValueAtTime(freq, t0); bp.frequency.exponentialRampToValueAtTime(80, t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(bp); bp.connect(g); g.connect(master); g.connect(wet); src.start(t0);
+}
+SA.tone = (freq, dur = 0.3, type = 'sine', vol = 0.1, slideTo) => voice(freq, { dur, type, vol, slideTo });
+SA.pluck = (freq, vol = 0.06) => { voice(freq, { dur: 1.6, type: 'triangle', vol, delay: true }); voice(freq * 2, { dur: 0.7, type: 'sine', vol: vol * 0.35 }); };
+SA.boom = big => { voice(big ? 95 : 170, { dur: big ? 1.8 : 0.6, type: 'sine', vol: big ? 0.4 : 0.2, slideTo: 32 }); noiseBurst(big ? 1.3 : 0.35, big ? 0.3 : 0.12, big ? 500 : 1600); };
+SA.onHole = h => {
+  if (!rumbleG) return;
+  const t = actx.currentTime;
+  rumbleG.gain.setTargetAtTime(soundOn ? h * 0.25 : 0, t, 0.08);
+  rumble.frequency.setTargetAtTime(32 + h * 50, t, 0.1);
+};
+// Two-note pentatonic chime when the particles change shape
 function chime(i) {
   if (!soundOn || !actx) return;
-  const notes = [440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5], t = actx.currentTime;
-  const o = actx.createOscillator(), g = actx.createGain();
-  o.type = 'sine'; o.frequency.setValueAtTime(notes[i % notes.length], t);
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
-  o.connect(g); g.connect(master); o.start(t); o.stop(t + 2.3);
+  SA.pluck(SCALE[3 + i % 7], 0.07); setTimeout(() => SA.pluck(SCALE[5 + i % 7], 0.05), 140);
 }
+// Harp: sweep the cursor (or swipe a finger) across the screen to strum
+let lastNote = -1, lastPluckT = 0;
+addEventListener('pointermove', e => {
+  if (!soundOn || (e.pointerType !== 'mouse' && e.pressure === 0)) return;
+  const idx = Math.min(SCALE.length - 1, Math.floor(e.clientX / innerWidth * SCALE.length)), now = performance.now();
+  if (idx === lastNote || now - lastPluckT < 55) return;
+  lastNote = idx; lastPluckT = now;
+  SA.pluck(SCALE[idx], 0.028 + Math.min(Math.abs(e.movementX || 8), 40) / 1400);
+});
+// Scroll speed opens the drone's filter — the page "breathes" as you move through it
+let lastSY = window.scrollY, lastST = performance.now(), scT;
+addEventListener('scroll', () => {
+  if (!soundOn) return;
+  const now = performance.now(), v = Math.abs(window.scrollY - lastSY) / Math.max(now - lastST, 16);
+  lastSY = window.scrollY; lastST = now;
+  lp.frequency.setTargetAtTime(420 + Math.min(v * 1600, 3400), actx.currentTime, 0.08);
+  clearTimeout(scT); scT = setTimeout(() => lp.frequency.setTargetAtTime(420, actx.currentTime, 0.6), 160);
+}, { passive: true });
+// Soft UI chimes on hover
+let hovEl = null, hovT = 0;
+document.addEventListener('pointerover', e => {
+  if (!soundOn || e.pointerType !== 'mouse') return;
+  const el = e.target.closest('.card,.tile,.stat,.pills i,.btn,.nav a,.ring,.badges span,.skill');
+  if (!el || el === hovEl) return;
+  hovEl = el;
+  const now = performance.now(); if (now - hovT < 70) return; hovT = now;
+  SA.pluck(SCALE[7 + [...el.parentElement.children].indexOf(el) % 7], 0.03);
+});
 const sndBtn = document.getElementById('snd');
+sndBtn.classList.add('nudge');
 sndBtn.onclick = () => {
   if (!actx) initAudio();
   soundOn = !soundOn; actx.resume();
-  master.gain.setTargetAtTime(soundOn ? 0.5 : 0, actx.currentTime, 0.6);
+  master.gain.setTargetAtTime(soundOn ? 0.6 : 0, actx.currentTime, 0.5);
   sndBtn.textContent = soundOn ? '🔊' : '🔇';
-  if (soundOn) chime(0);
+  sndBtn.classList.remove('nudge');
+  if (!soundOn) return;
+  SA.emit('sound');
+  [0, 2, 4, 7].forEach((k, i) => setTimeout(() => SA.pluck(SCALE[k + 3], 0.07), i * 110));
+  toast(matchMedia('(hover: none)').matches ? 'Sound on — swipe sideways to strum 🎵' : 'Sound on — sweep your cursor across the screen to play 🎵');
 };
 
-/* ============ English ⇄ العربية ============ */
-const AR = [
+/* ============ English ⇄ العربية (full site, right-to-left) ============ */
+// [selector, html] translates the first match; [selector, [html, …]] translates every match in order.
+// Tech names stay in English, as is standard in Gulf tech hiring. Leaves are targeted so live
+// values (clocks, counters, hidden bugs) inside their parents survive the swap.
+const AR_SRC = [
   ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
   ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
-  ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
-  ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'],
+  // hero
+  ['.role', 'مهندس برمجيات متكامل (Full-Stack) <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
+  ['#tag-pre', 'أبني'],
+  ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'], ['#quick-btn', '⚡ ملخص في 30 ثانية'],
   ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند ودول الخليج</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
+  ['.scroll-hint', '<span></span>مرّر'],
+  // about
+  ['#about .eyebrow', '01 — نبذة عني'],
   ['#about h2', 'هندسة برمجيات بروح <span class="gold">المسؤولية</span> والدقة والإتقان.'],
+  ['#about .glass > p', [
+    'مهندس برمجيات بخبرة تزيد على <b>3 سنوات</b>، متخصص في بناء تطبيقات React عالية الأداء وتصوير البيانات للمؤسسات — وأعمل الآن على المنظومة كاملة مع <b>Spring Boot</b>.',
+    'أتولى بشكل مستقل ميزات عالية الأثر من البداية إلى النهاية — من ترحيل المكتبات وتوحيد الواجهات إلى الامتثال لمعايير WCAG — مع تسليم السبرنتات <b>دون أي تأخير</b>.']],
+  ['#about .badges span', ['🎓 UVCE علوم الحاسب 2023 · المعدل 9.09', '🏅 منحة سيمنس', '⭐ «يفوق التوقعات» مرتين', '🚀 ترقية إلى مهندس برمجيات خلال عامين']],
+  ['#about blockquote', '«ملكية حقيقية للعمل، ومهارة تقنية، وروح تعاون.» <cite>— تقييم المدير</cite>'],
+  // impact
+  ['#impact .eyebrow', '02 — الإنجازات بالأرقام'],
   ['#impact h2', 'نتائج <span class="gold">تُنجَز</span> فعلًا.'],
-  ['#work h2', 'insightsoftware <span class="muted">· منصة Logi Symphony</span>'],
+  ['#impact .lbl', [
+    'تقليص حجم حزمة الجدول (بعد الضغط) بعد الترحيل إلى AG-Grid v35',
+    'عميل مؤسسي يستخدم منصة Playground التي بنيتها من الصفر',
+    'نقطة بيانات تُعرض بسلاسة بعد إصلاح تعطّل المتصفح في المخططات الخطية',
+    'خطأ تم إصلاحه · 89 نقلًا للإصلاحات عبر 11 إصدارًا مدعومًا',
+    'تحسّن في الامتثال لمعايير WCAG — أكثر من 35 إصلاحًا خلال ربع سنة',
+    'إيداعًا من وكلاء الذكاء الاصطناعي تمت مراجعتها · أكثر من 20 مهمة سُلّمت بسير عمل وكيلي']],
+  // experience
+  ['#work .eyebrow', '03 — الخبرات'],
+  ['#work h2', 'insightsoftware <span class="muted">· Logi Symphony</span>'],
+  ['#work .sub', 'فبراير 2023 – الآن · بنغالورو · <a href="https://playground.logi-symphony.com" target="_blank" rel="noopener">playground.logi-symphony.com ↗</a>'],
+  ['#work .tl-head h3', ['مهندس برمجيات', 'مهندس برمجيات مشارك', 'متدرب في هندسة البرمجيات']],
+  ['#work .tl-head span', ['سبتمبر 2025 – الآن', 'يوليو 2023 – أغسطس 2025', 'فبراير 2023 – يونيو 2023']],
+  ['#work .card h4', [
+    'ترحيل AG-Grid من v31 إلى v35', 'تنظيم المجلدات — الواجهة الخلفية بـ Spring Boot', 'تجربة المجلدات — الواجهة',
+    'تضمين التقارير ذاتية الخدمة', 'توحيد Symphony والصفحة الرئيسية', 'ذكاء Playground الاصطناعي والعروض التوضيحية',
+    'الامتثال لمعايير WCAG', 'إصلاح حرج لخطأ IIS 404.11', 'Source V2 والمرشِّحات',
+    'تطبيق Playground — من الصفر', 'فوز في الهاكاثون — «Composer»', 'SonarCloud ومخططات بـ 130 ألف نقطة',
+    'ترحيل السجلات: من Raize إلى Serilog']],
+  ['#work .card p', [
+    'قدت ترقية المكتبة على مستوى المؤسسة عبر أكثر من 15 وحدة. أعددت دراسة تغطي أكثر من 50 تغييرًا جذريًا وخارطة طريق من 17 مهمة، ورحّلت 58 ملف TypeScript وأكثر من 30 عارض خلايا مخصصًا إلى البنية المعيارية في v35.',
+    'كيانات JPA وواجهات REST و3 أدوار على مستوى المجلد عبر مُقيِّم ACL مخصص في Spring Security. مجلدات خاصة لكل مستخدم (~4 آلاف سطر): تجهيز قائم على الأحداث، وترحيل بيانات عبر Liquibase، ونقل ذري قائم على المشاركة.',
+    'شريط جانبي لشجرة المكتبة مع مسار التنقل، ونوافذ إنشاء المجلدات وتعديلها مع شارات مجلدات النظام، وتنقّل يبدأ بالمجلدات مع أدوار الصلاحيات.',
+    'سلّمت بمفردي تضمين التقارير ذاتية الخدمة من الدراسة الأولية حتى تسليم التوثيق — Embed Manager وأحداث SDK ومقتطفات التضمين.',
+    'قدت إعادة تصميم الصفحة الرئيسية لتصبح واجهة مركّزة على المهام مع دعم السمات، ودمجت أكثر من 5 مسارات إدارية في تجربة موحّدة.',
+    'دمجت روبوت المحادثة بالذكاء الاصطناعي (إنشاء المرئيات، أسئلة البيانات، Bot API)، وعروضًا للتقارير الدقيقة وCrystal Reports والعلامة البيضاء، ونشرًا تجريبيًا لكل فرع عبر GitHub Actions.',
+    'أنهيت ديون إمكانية الوصول لربع سنة كامل — تعارضات aria-hidden وtabindex، وأنماط قارئ الشاشة باستخدام Blueprint.js في لوحات المعلومات ومحرر المصادر والقوائم.',
+    'شخّصت أحرفًا مُرمَّزة في الروابط المركّبة كانت تعطّل عمليات النشر على Windows — إصلاح شمل 100% من العملاء على Windows.',
+    'تبويب الاتصالات (واجهة شجرية) وتبويب الملفات واللوحة الجانبية لـ Source V2. المرحلة الثانية من المرشِّح الهرمي ولوحة المرشِّحات ذات التطبيق التلقائي — دون أي تأخير عبر أكثر من 6 سبرنتات.',
+    'بنيت منصة Playground الموجّهة للعملاء من الأساس، ويستخدمها الآن أكثر من 100 عميل مؤسسي لاستكشاف المنتج.',
+    'قدت تطوير الواجهة لميزة جديدة في الهاكاثون، واعتُمدت لاحقًا ضمن خارطة طريق المنتج.',
+    'خفّضت أخطاء SonarCloud عالية الخطورة إلى الصفر، وأصلحت تعطّل المتصفح في مخططات تعرض أكثر من 130 ألف نقطة، وعالجت مشكلات النشر في K8s/Docker وCentOS/PostgreSQL.',
+    'رحّلت مكتبة السجلات في المنتج، مما حسّن قابلية الصيانة.']],
+  ['#work .card .kpi', ['−42% من الحزمة', '~4 آلاف سطر', 'من البداية للنهاية', 'تسليم فردي', 'من 5+ إلى 1', 'روبوت ذكاء اصطناعي', '+40% امتثال', '100% من مستخدمي Windows', '0 تأخير', '+100 عميل', '🏆 ضمن خارطة الطريق', '0 أخطاء حرجة']],
+  // skills
+  ['#skills .eyebrow', '04 — المهارات'],
   ['#skills h2', 'أدوات <span class="gold">أتقنها</span>.'],
+  ['#skills .skill h4', ['الواجهات الأمامية', 'الواجهات الخلفية', 'البنية التحتية والأدوات', 'سير عمل يعتمد على الذكاء الاصطناعي']],
+  // education
+  ['#edu .eyebrow', '05 — التعليم والتقدير'],
   ['#edu h2', '<span class="gold">تميّز</span> أكاديمي.'],
+  ['#edu .sub', 'بكالوريوس التقنية في علوم وهندسة الحاسب<br/>كلية فيسفيسفارايا الجامعية للهندسة (UVCE)، بنغالورو · 2019 – 2023'],
+  ['#edu .ring > span', ['المعدل التراكمي', 'الصف الثاني عشر', 'الصف العاشر', 'منحة سيمنس']],
+  ['#edu .ring > b', [null, null, null, 'كاملة']],
+  ['#edu .langs span', ['<b>English</b> احترافي', '<b class="deva">हिन्दी</b> احترافي', '<b class="kan">ಕನ್ನಡ</b> اللغة الأم', '<b>తెలుగు</b> محادثة']],
+  // live
+  ['#live .eyebrow', '<span class="live-dot"></span>06 — الآن'],
   ['#live h2', 'مباشرة من <span class="gold">بنغالورو</span>.'],
+  ['#live .sub', 'كل ما هنا يتحدّث لحظيًا — توقيتي المحلي، والطقس خارج نافذتي، ومدى تقاطع منطقتك الزمنية مع منطقتي، وأداء هذه الصفحة على جهازك.'],
+  ['#live .t-clock small', 'بنغالورو · توقيت الهند'], ['#live .i-you', 'توقيتك'], ['#live .t-weather small', 'الطقس في بنغالورو'],
+  ['#live .t-ship small', 'أبني برمجيات المؤسسات منذ'], ['#live .i-since', 'منذ فبراير 2023 · والعدّاد مستمر'],
+  ['#live .t-nerd small', 'إحصاءات للمهتمين · هذه الصفحة على جهازك'], ['#live .nerd span', ['إطار/ث', 'جسيم', 'زمن التحميل', 'المعالج الرسومي']],
+  ['#live .t-deploy small', 'آخر نشر للموقع'], ['#ach-tile small', 'استكشافك'],
+  ['#ach-tile .muted-s', '🐞 <b id="at-bugs">0</b>/8 أخطاء مخفية تم سحقها · 🏆 <b id="at-ach">0</b>/15 إنجازًا — كل خطأ يخفي قصة من مسيرتي.'],
+  ['#ach-tile .play', 'عرض ◀'],
+  // contact
+  ['#contact .eyebrow', '07 — تواصل'],
   ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
-  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير الشامل (Full-Stack).'],
-].map(([sel, ar]) => { const el = document.querySelector(sel); return el && { el, ar, en: el.innerHTML }; }).filter(Boolean);
+  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير المتكامل (Full-Stack).'],
+  ['.holo-hint', '↔ اسحب البطاقة لتدويرها · انقر لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
+  ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
+  ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
+  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · صُمّم بـ Three.js و JavaScript · <span class="desk">انقر على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للطرفية</span><span class="touch">انقر على مساحة فارغة لموجة صادمة · أمِل هاتفك</span>`],
+  // chrome
+  ['.dock a', ['<span>⌂</span>الرئيسية', '<span>◉</span>مباشر', '<span>▤</span>الخبرات', '<span>✉</span>تواصل']], ['#dock-k', '<span>⌘</span>القائمة'],
+  ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطولًا</b> لثقب أسود · <b>انقر</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب أفقيًا</b> للتدوير · <b>اضغط مطولًا</b> لثقب أسود · <b>انقر</b> لموجة صادمة</span>'],
+  // 30-second summary
+  ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'مهندس برمجيات متكامل · insightsoftware'],
+  ['#quick dt', ['الخبرة', 'التقنيات الأساسية', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع']],
+  ['#quick dd', [
+    'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية إلى مهندس برمجيات خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
+    'ذكاء الأعمال وتصوير البيانات للمؤسسات (Logi Symphony)',
+    'تقليص حزمة الجدول 42% · منصة Playground يستخدمها أكثر من 100 عميل مؤسسي · تحسين الامتثال لـ WCAG بنسبة 40% · دون أي تأخير في السبرنتات',
+    'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
+    'الإنجليزية، الهندية، الكنادية، التيلوغوية', 'بنغالورو، الهند · منفتح على فرص العمل في الهند ودول الخليج']],
+  ['#quick .q-actions > *', ['تنزيل السيرة الذاتية', 'نسخ البريد', 'واتساب']],
+];
+const AR = AR_SRC.flatMap(([sel, ar]) => Array.isArray(ar)
+  ? [...document.querySelectorAll(sel)].map((el, i) => ar[i] != null && { el, ar: ar[i], en: el.innerHTML }).filter(Boolean)
+  : (el => el ? [{ el, ar, en: el.innerHTML }] : [])(document.querySelector(sel)));
 let isAr = false;
 const langBtn = document.getElementById('lang');
 function toggleLang() {
   const apply = () => {
     isAr = !isAr;
-    AR.forEach(({ el, ar, en }) => { el.innerHTML = isAr ? ar : en; if (isAr) el.setAttribute('dir', 'rtl'); else el.removeAttribute('dir'); el.classList.toggle('ar', isAr); });
+    AR.forEach(({ el, ar, en }) => { el.innerHTML = isAr ? ar : en; });
     document.documentElement.lang = isAr ? 'ar' : 'en';
+    document.documentElement.dir = isAr ? 'rtl' : 'ltr';
     langBtn.textContent = isAr ? 'EN' : 'ع';
+    measure();
+    SA.emit('langchange');
+    if (isAr) SA.emit('lang');
   };
   document.startViewTransition ? document.startViewTransition(apply) : apply();
 }
@@ -589,12 +820,12 @@ function closeOverlays() {
   cmdk.hidden = true; quick.hidden = true;
   if (wasOpen) lastFocus?.focus?.();
 }
-function openQuick() { closeOverlays(); lastFocus = document.activeElement; quick.hidden = false; document.getElementById('quick-x').focus(); }
+function openQuick() { SA.emit('summary'); closeOverlays(); lastFocus = document.activeElement; quick.hidden = false; document.getElementById('quick-x').focus(); }
 [cmdk, quick].forEach(o => o.addEventListener('pointerdown', e => { if (e.target === o) closeOverlays(); }));
 document.getElementById('quick-x').onclick = closeOverlays;
 document.getElementById('quick-btn').onclick = openQuick;
 
-const go = id => () => document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+const go = id => () => scrollToEl(document.getElementById(id));
 const ACTIONS = [
   { g: 'Navigate', i: '⌂', l: 'Home', run: go('home') },
   { g: 'Navigate', i: '◎', l: 'About', run: go('about') },
@@ -628,7 +859,7 @@ function renderCmdk() {
   cList.innerHTML = html || '<li class="none">No results — try “resume” or “globe”</li>';
   cList.querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
 }
-function openCmdk() { closeOverlays(); lastFocus = document.activeElement; cmdk.hidden = false; cIn.value = ''; sel = 0; renderCmdk(); cIn.focus(); }
+function openCmdk() { SA.emit('cmdk'); closeOverlays(); lastFocus = document.activeElement; cmdk.hidden = false; cIn.value = ''; sel = 0; renderCmdk(); cIn.focus(); }
 function runSel(i = sel) { const a = filtered[i]; if (!a) return; closeOverlays(); a.run(); }
 cIn.addEventListener('input', () => { sel = 0; renderCmdk(); });
 cIn.addEventListener('keydown', e => {

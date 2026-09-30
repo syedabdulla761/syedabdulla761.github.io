@@ -1,9 +1,12 @@
-// Live panel, holographic business card and the bug-squash mini-game.
+// Live panel, holographic business card and the exploration game (hidden bugs + achievements).
 // Relies on window.SA exposed by main.js (loaded first).
 const SA = window.SA;
 const $ = id => document.getElementById(id);
 const IST = 'Asia/Kolkata';
 const isTouch = matchMedia('(hover: none)').matches;
+const isAr = () => document.documentElement.lang === 'ar';
+// Arabic counted nouns: 1, 2 (dual), 3–10 (plural), 11+ (singular accusative)
+const arCount = (n, [one, two, few, many]) => n === 1 ? one : n === 2 ? two : n <= 10 ? `${n} ${few}` : `${n} ${many}`;
 
 /* ============ Timezone helpers ============ */
 function tzOffsetMin(tz, d = new Date()) {
@@ -12,6 +15,7 @@ function tzOffsetMin(tz, d = new Date()) {
   return Math.round((asUTC - d.getTime()) / 60000);
 }
 const fmtTime = (tz, sec) => new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', ...(sec ? { second: '2-digit' } : {}) });
+const fmtDurAr = m => { const h = Math.floor(Math.abs(m) / 60), mm = Math.abs(m) % 60; return [h && h + ' س', mm && mm + ' د'].filter(Boolean).join(' ') || '0 د'; };
 const fmtDur = m => { const h = Math.floor(Math.abs(m) / 60), mm = Math.abs(m) % 60; return (h ? h + 'h' : '') + (mm ? (h ? ' ' : '') + mm + 'm' : '') || '0m'; };
 
 // Shared 09:00–18:00 working window between two UTC offsets (minutes)
@@ -31,9 +35,10 @@ const cityOf = tz => ({ Calcutta: 'Kolkata', Bombay: 'Mumbai', Saigon: 'Ho Chi M
 function statusIST() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: IST, weekday: 'short', hour: 'numeric', hourCycle: 'h23' }).formatToParts(new Date()).map(p => [p.type, p.value]));
   const h = +parts.hour, weekend = parts.weekday === 'Sat' || parts.weekday === 'Sun';
-  if (h >= 23 || h < 7) return ['night', '🌙 Night in Bengaluru — I’ll reply in the morning'];
-  if (!weekend && h >= 9 && h < 19) return ['on', '🟢 Working hours here — a great time to reach out'];
-  return ['eve', '🟡 Off-hours in Bengaluru — messages welcome'];
+  const ar = isAr();
+  if (h >= 23 || h < 7) return ['night', ar ? '🌙 الوقت ليل في بنغالورو — سأرد صباحًا' : '🌙 Night in Bengaluru — I’ll reply in the morning'];
+  if (!weekend && h >= 9 && h < 19) return ['on', ar ? '🟢 ساعات العمل هنا — وقت مثالي للتواصل' : '🟢 Working hours here — a great time to reach out'];
+  return ['eve', ar ? '🟡 خارج ساعات العمل في بنغالورو — رسائلك مرحّب بها' : '🟡 Off-hours in Bengaluru — messages welcome'];
 }
 function tickLive() {
   $('lv-time').textContent = fmtTime(IST, true);
@@ -42,9 +47,9 @@ function tickLive() {
   $('lv-you').textContent = fmtTime(visitorTz);
   const ist = tzOffsetMin(IST), you = tzOffsetMin(visitorTz), diff = you - ist;
   const ov = overlapMin(ist, you);
-  $('lv-overlap').textContent = diff === 0
-    ? 'Same timezone as me — full working-day overlap'
-    : `You're ${fmtDur(diff)} ${diff > 0 ? 'ahead of' : 'behind'} Bengaluru · ${fmtDur(ov)} of shared working hours`;
+  $('lv-overlap').textContent = isAr()
+    ? (diff === 0 ? 'نفس منطقتي الزمنية — تداخل كامل في يوم العمل' : `أنت ${diff > 0 ? 'تسبق' : 'تتأخر عن'} بنغالورو بـ ${fmtDurAr(diff)} · ${fmtDurAr(ov)} من ساعات العمل المشتركة`)
+    : (diff === 0 ? 'Same timezone as me — full working-day overlap' : `You're ${fmtDur(diff)} ${diff > 0 ? 'ahead of' : 'behind'} Bengaluru · ${fmtDur(ov)} of shared working hours`);
   $('lv-bar').style.width = (ov / 540 * 100) + '%';
   // career counter
   const start = new Date('2023-02-01T09:00:00+05:30'), now = new Date();
@@ -52,27 +57,44 @@ function tickLive() {
   if (d < 0) { m--; d += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
   if (m < 0) { y--; m += 12; }
   const secs = Math.floor((now - start) / 1000);
-  $('lv-ship').innerHTML = `${y}<i>y</i> ${m}<i>m</i> ${d}<i>d</i> <span>${String(Math.floor(secs % 86400 / 3600)).padStart(2, '0')}:${String(Math.floor(secs % 3600 / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}</span>`;
-  $('lv-days').textContent = Math.floor(secs / 86400).toLocaleString('en-IN') + ' days';
+  const [uy, um, ud] = isAr() ? ['س', 'ش', 'ي'] : ['y', 'm', 'd'];
+  $('lv-ship').innerHTML = `${y}<i>${uy}</i> ${m}<i>${um}</i> ${d}<i>${ud}</i> <span>${String(Math.floor(secs % 86400 / 3600)).padStart(2, '0')}:${String(Math.floor(secs % 3600 / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}</span>`;
+  const days = Math.floor(secs / 86400);
+  $('lv-days').textContent = days.toLocaleString('en-IN') + (isAr() ? ' يومًا' : ' days');
 }
 $('lv-tz').textContent = cityOf(visitorTz);
 tickLive(); setInterval(tickLive, 1000);
 
 /* ============ Live: Bengaluru weather (Open-Meteo, no key) ============ */
-const WX = [[[0], '☀️', 'Clear sky', '🌙'], [[1, 2], '🌤️', 'Partly cloudy', '☁️'], [[3], '☁️', 'Overcast'], [[45, 48], '🌫️', 'Foggy'], [[51, 53, 55, 56, 57], '🌦️', 'Drizzle'],
-  [[61, 63, 65, 66, 67], '🌧️', 'Rain'], [[71, 73, 75, 77, 85, 86], '❄️', 'Snow'], [[80, 81, 82], '🌦️', 'Rain showers'], [[95, 96, 99], '⛈️', 'Thunderstorm']];
+const WX = [[[0], '☀️', 'Clear sky', '🌙', 'سماء صافية'], [[1, 2], '🌤️', 'Partly cloudy', '☁️', 'غائم جزئيًا'], [[3], '☁️', 'Overcast', null, 'غائم'], [[45, 48], '🌫️', 'Foggy', null, 'ضبابي'], [[51, 53, 55, 56, 57], '🌦️', 'Drizzle', null, 'رذاذ'],
+  [[61, 63, 65, 66, 67], '🌧️', 'Rain', null, 'ممطر'], [[71, 73, 75, 77, 85, 86], '❄️', 'Snow', null, 'ثلوج'], [[80, 81, 82], '🌦️', 'Rain showers', null, 'زخات مطر'], [[95, 96, 99], '⛈️', 'Thunderstorm', null, 'عاصفة رعدية']];
+let wxNow = null, wxFailed = false;
+function renderWx() {
+  if (wxFailed) { $('lv-temp').textContent = '—'; $('lv-wx').textContent = isAr() ? 'بيانات الطقس غير متاحة حاليًا' : 'Weather feed unavailable right now'; return; }
+  if (!wxNow) return;
+  const c = wxNow, w = WX.find(x => x[0].includes(c.weather_code)) || [[], '🌡️', 'Weather', null, 'الطقس'];
+  $('lv-temp').innerHTML = `${Math.round(c.temperature_2m)}°<small>C</small> <span class="wx-ico">${!c.is_day && w[3] ? w[3] : w[1]}</span>`;
+  $('lv-wx').textContent = isAr()
+    ? `${w[4]} · الإحساس ${Math.round(c.apparent_temperature)}° · الرطوبة ${c.relative_humidity_2m}%`
+    : `${w[2]} · feels ${Math.round(c.apparent_temperature)}° · ${c.relative_humidity_2m}% humidity`;
+}
 (async () => {
   try {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 6000);
     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.97&longitude=77.59&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day&timezone=Asia%2FKolkata', { signal: ctl.signal });
-    const c = (await r.json()).current;
-    const w = WX.find(x => x[0].includes(c.weather_code)) || [[], '🌡️', 'Weather'];
-    $('lv-temp').innerHTML = `${Math.round(c.temperature_2m)}°<small>C</small> <span class="wx-ico">${!c.is_day && w[3] ? w[3] : w[1]}</span>`;
-    $('lv-wx').textContent = `${w[2]} · feels ${Math.round(c.apparent_temperature)}° · ${c.relative_humidity_2m}% humidity`;
-  } catch { $('lv-temp').textContent = '—'; $('lv-wx').textContent = 'Weather feed unavailable right now'; }
+    wxNow = (await r.json()).current; renderWx();
+  } catch { wxFailed = true; renderWx(); }
 })();
 
 /* ============ Live: last deploy from GitHub ============ */
+const AR_UNITS = { year: ['منذ سنة', 'منذ سنتين', 'سنوات', 'سنة'], month: ['منذ شهر', 'منذ شهرين', 'أشهر', 'شهرًا'], day: ['منذ يوم', 'منذ يومين', 'أيام', 'يومًا'], hour: ['منذ ساعة', 'منذ ساعتين', 'ساعات', 'ساعة'], minute: ['منذ دقيقة', 'منذ دقيقتين', 'دقائق', 'دقيقة'] };
+const agoAr = d => { const s = (Date.now() - d) / 1000; for (const [u, n] of [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]]) if (s >= n) { const v = Math.floor(s / n), f = AR_UNITS[u]; return v <= 2 ? arCount(v, f) : 'منذ ' + arCount(v, f); } return 'الآن'; };
+let commit = null;
+function renderDep() {
+  if (!commit) { $('lv-dep').textContent = isAr() ? 'مؤخرًا' : 'Recently'; return; }
+  $('lv-dep').textContent = isAr() ? agoAr(new Date(commit.date)) : ago(new Date(commit.date));
+  $('lv-msg').innerHTML = `<a href="${commit.url}" target="_blank" rel="noopener">${commit.sha}</a> ${commit.msg.replace(/</g, '&lt;')}`;
+}
 const ago = d => { const s = (Date.now() - d) / 1000; for (const [u, n] of [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]]) if (s >= n) { const v = Math.floor(s / n); return `${v} ${u}${v > 1 ? 's' : ''} ago`; } return 'just now'; };
 (async () => {
   try {
@@ -83,9 +105,8 @@ const ago = d => { const s = (Date.now() - d) / 1000; for (const [u, n] of [['ye
       c = { date: j.commit.author.date, msg: j.commit.message.split('\n')[0], sha: j.sha.slice(0, 7), url: j.html_url };
       try { sessionStorage.setItem('sa-commit', JSON.stringify(c)); } catch {}
     }
-    $('lv-dep').textContent = ago(new Date(c.date));
-    $('lv-msg').innerHTML = `<a href="${c.url}" target="_blank" rel="noopener">${c.sha}</a> ${c.msg.replace(/</g, '&lt;')}`;
-  } catch { $('lv-dep').textContent = 'Recently'; $('lv-msg').textContent = 'GitHub API unavailable'; }
+    commit = c; renderDep();
+  } catch { renderDep(); $('lv-msg').textContent = 'GitHub API unavailable'; }
 })();
 
 /* ============ Live: stats for nerds ============ */
@@ -111,96 +132,179 @@ function drawSpark() {
 }
 setInterval(drawSpark, 500);
 
-/* ============ Holographic business card ============ */
+/* ============ Holographic business card — drag / swipe to spin, tap to flip ============ */
 const stage = document.querySelector('.holo-stage'), holo = $('holo');
-let flipped = false, rx = 0, ry = 0;
-const applyHolo = () => { holo.style.transform = `rotateX(${rx}deg) rotateY(${ry + (flipped ? 180 : 0)}deg)`; };
+let angle = 0, tiltX = 0, tiltY = 0, drag = null;
+const applyHolo = () => { holo.style.transform = `rotateX(${tiltX}deg) rotateY(${angle + tiltY}deg)`; };
 function setTilt(nx, ny) { // nx, ny in 0..1
-  rx = (0.5 - ny) * 22; ry = (nx - 0.5) * 30;
+  tiltX = (0.5 - ny) * 22; tiltY = (nx - 0.5) * 26;
   holo.style.setProperty('--fx', nx * 100 + '%'); holo.style.setProperty('--fy', ny * 100 + '%');
   holo.style.setProperty('--ang', (nx * 180 + 90) + 'deg');
   applyHolo();
 }
-stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; const r = stage.getBoundingClientRect(); setTilt((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); });
-stage.addEventListener('pointerleave', () => { rx = ry = 0; applyHolo(); });
-const flip = () => { flipped = !flipped; applyHolo(); SA.tone(660, 0.25, 'sine', 0.06, 990); navigator.vibrate?.(10); };
-holo.addEventListener('click', flip);
-$('flip-btn').addEventListener('click', flip);
+function settle(target) {
+  const turned = Math.round(target / 180) !== Math.round(drag?.start / 180 ?? 0);
+  angle = target; holo.classList.remove('dragging'); applyHolo();
+  if (turned) { SA.pluck(659.25, 0.06); navigator.vibrate?.(10); SA.emit('card'); }
+}
+holo.addEventListener('pointerdown', e => {
+  drag = { x: e.clientX, lx: e.clientX, t: performance.now(), start: angle, vel: 0, moved: 0 };
+  holo.setPointerCapture(e.pointerId); holo.classList.add('dragging');
+});
+holo.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.lx; drag.lx = e.clientX; drag.moved += Math.abs(dx);
+  drag.vel = drag.vel * 0.6 + dx * 0.4;
+  angle = drag.start + (e.clientX - drag.x) * 0.6;
+  if (drag.moved > 30 && Math.abs(dx) > 6) SA.pluck(1318.51 - Math.min(Math.abs(dx), 30) * 8, 0.012);
+  applyHolo();
+});
+function release() {
+  if (!drag) return;
+  let target;
+  if (drag.moved < 6 && performance.now() - drag.t < 400) target = Math.round(drag.start / 180) * 180 + 180; // tap = flip
+  else target = Math.round((angle + drag.vel * 9) / 180) * 180; // flick carries momentum, then snaps to a face
+  settle(target); drag = null;
+}
+holo.addEventListener('pointerup', release);
+holo.addEventListener('pointercancel', release);
+holo.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drag = { start: angle }; settle(angle + 180); drag = null; } });
+stage.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || drag) return; const r = holo.getBoundingClientRect(); setTilt(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (e.clientY - r.top) / r.height))); });
+stage.addEventListener('pointerleave', () => { if (drag) return; tiltX = tiltY = 0; applyHolo(); });
 if (isTouch) addEventListener('deviceorientation', e => {
-  if (e.gamma == null) return;
+  if (e.gamma == null || drag) return;
   setTilt(Math.max(0, Math.min(1, 0.5 + e.gamma / 50)), Math.max(0, Math.min(1, 0.5 + (e.beta - 45) / 50)));
 });
+const flipCard = () => { drag = { start: angle }; settle(Math.round(angle / 180) * 180 + 180); drag = null; };
 // QR code (qrcode-generator, loaded globally) → portfolio URL
 try {
   const qr = window.qrcode(0, 'M'); qr.addData('https://syedabdulla761.github.io/'); qr.make();
   $('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
 } catch { $('qr').textContent = 'syedabdulla761.github.io'; }
 
-/* ============ Mini-game: squash the bugs ============ */
-const game = $('game'), field = $('g-field');
-const BUGS = ['🐞', '🐛', '🪲', '🦟'], FEAT = '✨';
-let running = false, score = 0, escaped = 0, oops = 0, endAt = 0, lastSpawn = 0, ents = [], raf;
-const best = () => { try { return +localStorage.getItem('sa-bugs-best') || 0; } catch { return 0; } };
-function openGame() { SA.closeOverlays(); game.hidden = false; $('g-start').hidden = false; $('g-end').hidden = true; $('g-best').textContent = best() ? `Your best: ${best()}` : ''; }
-function closeGame() { running = false; cancelAnimationFrame(raf); game.hidden = true; field.innerHTML = ''; ents = []; }
-function spawn(now) {
-  const el = document.createElement('span'), feature = Math.random() < 0.16;
-  el.className = 'bug' + (feature ? ' feat' : ''); el.textContent = feature ? FEAT : BUGS[Math.random() * BUGS.length | 0];
-  const W = innerWidth, H = innerHeight, side = Math.random() * 4 | 0;
-  const x = [Math.random() * W, W + 30, Math.random() * W, -30][side], y = [-30, Math.random() * H, H + 30, Math.random() * H][side];
-  const tx = W * (0.2 + Math.random() * 0.6), ty = H * (0.2 + Math.random() * 0.6), ang = Math.atan2(ty - y, tx - x);
-  const speed = (feature ? 1.3 : 1.6 + Math.random() * 1.6) * (1 + (now - (endAt - 20000)) / 20000) * (W < 600 ? 0.8 : 1);
-  const ent = { el, x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, feature, wob: Math.random() * 6, dead: false };
-  el.addEventListener('pointerdown', e => { e.stopPropagation(); squash(ent, e); });
-  field.appendChild(el); ents.push(ent);
+/* ============ Exploration game: hidden bugs + achievements ============ */
+// Bugs hide on real content. Squashing one reveals the story behind it, so visitors read
+// about Syed while they play — without a separate "game" screen.
+const BUGS = [
+  { host: '#about .glass', hint: 'About', fact: 'Siemens Scholar — full scholarship through B.Tech at UVCE, graduating with a 9.09 CGPA.' },
+  { host: '#impact .stat:nth-child(1)', hint: 'Impact', fact: 'AG-Grid v31 → v35: mapped 50+ breaking changes, migrated 58 TypeScript files and cut the grid bundle by 42%.' },
+  { host: '#impact .stat:nth-child(3)', hint: 'Impact', fact: 'Fixed a browser crash when line charts rendered 130K+ data points (stacked-value computation).' },
+  { host: 'IIS', hint: 'Experience', fact: 'Traced IIS HTTP 404.11 to encoded characters in composite URLs — a bug hitting 100% of Windows-deployed customers.' },
+  { host: 'SonarCloud', hint: 'Experience', fact: 'Drove SonarCloud High-severity frontend bugs down to zero.' },
+  { host: '#skills .skill:nth-child(2)', hint: 'Stack', fact: 'Built folder-scoped roles with a custom Spring Security ACL evaluator and advisory-lock name uniqueness.' },
+  { host: '#edu .ring:nth-child(2)', hint: 'Education', fact: 'Scored 96.16% in Class 12 and 96.48% in Class 10.' },
+  { host: '#live .t-ship', hint: 'Live', fact: '90+ bugs fixed and 89 backports across 11 supported releases since 2023.' },
+];
+const ACH = [
+  { id: 'hello', i: '👋', n: 'First contact', d: 'Scrolled past the hero', xp: 10 },
+  { id: 'impact', i: '📈', n: 'Numbers person', d: 'Checked the impact stats', xp: 10 },
+  { id: 'work', i: '💼', n: 'Deep diver', d: 'Explored the experience timeline', xp: 20 },
+  { id: 'live', i: '📡', n: 'Live wire', d: 'Tuned in live from Bengaluru', xp: 10 },
+  { id: 'end', i: '🏁', n: 'Completionist', d: 'Made it all the way to Contact', xp: 20 },
+  { id: 'burst', i: '💥', n: 'Big bang', d: 'Tapped empty space for a shockwave', xp: 15 },
+  { id: 'hole', i: '🕳️', n: 'Event horizon', d: 'Held down to create a black hole', xp: 30 },
+  { id: 'spin', i: '🌀', n: 'Orbital mechanic', d: 'Dragged to spin the constellation', xp: 15 },
+  { id: 'card', i: '💳', n: 'Card shark', d: 'Flipped the holographic card', xp: 15 },
+  { id: 'sound', i: '🎵', n: 'Maestro', d: 'Turned on the sound', xp: 15 },
+  { id: 'lang', i: '🌍', n: 'Polyglot', d: 'Switched the site to العربية', xp: 15 },
+  { id: 'term', i: '⌨️', n: 'Hacker', d: 'Found the secret terminal', xp: 25 },
+  { id: 'cmdk', i: '⚡', n: 'Power user', d: 'Opened the command menu', xp: 15 },
+  { id: 'summary', i: '📋', n: 'Recruiter mode', d: 'Read the 30-second summary', xp: 15 },
+  { id: 'hunter', i: '🏆', n: 'Bug hunter', d: 'Squashed every hidden bug', xp: 100 },
+];
+const KEY = 'sa-progress-v1';
+let prog = { a: [], b: [] };
+try { prog = { a: [], b: [], ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch {} };
+const xp = () => prog.a.reduce((s, id) => s + (ACH.find(a => a.id === id)?.xp || 0), 0) + prog.b.length * 10;
+const level = x => Math.floor(x / 100) + 1;
+
+const hud = $('hud'), achStack = $('ach-stack');
+function renderHud(pulse) {
+  const x = xp(), lv = level(x), pct = x % 100;
+  $('hud-lv').textContent = lv; $('hud-bugs').textContent = `${prog.b.length}/${BUGS.length}`;
+  $('hud-ring').style.setProperty('--p', pct);
+  $('at-lv').textContent = 'Lv ' + lv; $('at-xp').textContent = x; $('at-bugs').textContent = prog.b.length; $('at-ach').textContent = prog.a.length;
+  $('at-bar').style.width = Math.round((prog.a.length + prog.b.length) / (ACH.length + BUGS.length) * 100) + '%';
+  if (prog.a.length || prog.b.length) hud.classList.add('show');
+  if (pulse) { hud.classList.remove('pulse'); void hud.offsetWidth; hud.classList.add('pulse'); }
 }
-function pop(x, y, txt, cls) { const f = document.createElement('b'); f.className = 'g-pop ' + cls; f.textContent = txt; f.style.left = x + 'px'; f.style.top = y + 'px'; field.appendChild(f); setTimeout(() => f.remove(), 700); }
-function squash(ent, e) {
-  if (ent.dead || !running) return;
-  ent.dead = true; ent.el.classList.add('splat');
-  setTimeout(() => ent.el.remove(), 400);
-  if (ent.feature) { oops++; score = Math.max(0, score - 3); pop(ent.x, ent.y, '−3 feature!', 'bad'); navigator.vibrate?.([30, 40, 30]); SA.tone(160, 0.3, 'square', 0.05, 80); game.classList.add('shake'); setTimeout(() => game.classList.remove('shake'), 300); }
-  else { score++; pop(ent.x, ent.y, '+1', 'good'); navigator.vibrate?.(12); SA.tone(520 + score * 12, 0.12, 'triangle', 0.07, 1200); }
-  $('g-score').textContent = score;
+function popCard(html, cls = '', ms = 3800) {
+  const el = document.createElement('div');
+  el.className = 'ach-toast ' + cls; el.innerHTML = html;
+  achStack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('in'));
+  setTimeout(() => { el.classList.remove('in'); setTimeout(() => el.remove(), 500); }, ms);
 }
-function loop(now) {
-  if (!running) return;
-  const left = Math.max(0, endAt - now);
-  $('g-time').textContent = Math.ceil(left / 1000);
-  const interval = 650 - (1 - left / 20000) * 380;
-  if (now - lastSpawn > interval) { spawn(now); lastSpawn = now; }
-  for (const b of ents) {
-    if (b.dead) continue;
-    b.wob += 0.15; b.x += b.vx + Math.sin(b.wob) * 0.8; b.y += b.vy + Math.cos(b.wob) * 0.8;
-    b.el.style.transform = `translate(${b.x}px,${b.y}px) translate(-50%,-50%) rotate(${Math.atan2(b.vy, b.vx) * 57.3 + 90 + Math.sin(b.wob) * 12}deg)`;
-    if (b.x < -60 || b.x > innerWidth + 60 || b.y < -60 || b.y > innerHeight + 60) { b.dead = true; b.el.remove(); if (!b.feature) escaped++; }
-  }
-  ents = ents.filter(b => !b.dead || b.el.isConnected);
-  if (left <= 0) return finish();
-  raf = requestAnimationFrame(loop);
+function unlock(id) {
+  if (prog.a.includes(id)) return;
+  const a = ACH.find(x => x.id === id); if (!a) return;
+  const before = level(xp());
+  prog.a.push(id); save();
+  popCard(`<span class="at-i">${a.i}</span><div><small>Achievement unlocked · +${a.xp} XP</small><b>${a.n}</b></div>`);
+  [0, 4, 7].forEach((k, i) => setTimeout(() => SA.pluck([523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98, 1760, 2093][k] || 1046.5, 0.05), i * 90));
+  levelCheck(before); renderHud(true);
 }
-function start() {
-  field.innerHTML = ''; ents = []; score = escaped = oops = 0; $('g-score').textContent = 0;
-  $('g-start').hidden = true; $('g-end').hidden = true;
-  running = true; endAt = performance.now() + 20000; lastSpawn = 0;
-  SA.tone(440, 0.15, 'triangle', 0.08, 880);
-  raf = requestAnimationFrame(loop);
+function levelCheck(before) {
+  const now = level(xp());
+  if (now > before) setTimeout(() => popCard(`<span class="at-i">⭐</span><div><small>Level up</small><b>You reached level ${now}</b></div>`, 'lvl'), 600);
 }
-function finish() {
-  running = false; field.querySelectorAll('.bug').forEach(b => b.classList.add('flee'));
-  const prev = best(); if (score > prev) try { localStorage.setItem('sa-bugs-best', score); } catch {}
-  const rank = score >= 30 ? 'Principal Bug Hunter 🏆' : score >= 20 ? 'Senior Debugger 💪' : score >= 10 ? 'Solid Engineer 👍' : 'The bugs won this round 😅';
-  $('g-title').textContent = rank;
-  $('g-msg').innerHTML = `You squashed <b>${score}</b> bug${score === 1 ? '' : 's'}${escaped ? ` · ${escaped} escaped` : ''}${oops ? ` · ${oops} feature${oops > 1 ? 's' : ''} broken` : ''}${score > prev && prev ? ' · <b>new best!</b>' : ''}.<br>Syed has squashed <b>90+ production bugs</b> and shipped <b>89 backports</b> across 11 releases — without breaking features.`;
-  $('g-end').hidden = false;
-  SA.tone(330, 0.5, 'sine', 0.1, 660);
+['burst', 'hole', 'spin', 'card', 'sound', 'lang', 'term', 'cmdk', 'summary'].forEach(ev => SA.on(ev, () => unlock(ev)));
+const secAch = { about: 'hello', impact: 'impact', work: 'work', live: 'live', contact: 'end' };
+const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { unlock(secAch[e.target.id]); sio.unobserve(e.target); } }), { threshold: 0.35 });
+Object.keys(secAch).forEach(id => sio.observe($(id)));
+
+// Plant the bugs
+const bugHost = h => h.startsWith('#') ? document.querySelector(h) : [...document.querySelectorAll('#work .card')].find(c => c.textContent.includes(h));
+const BUG_ICONS = ['🐞', '🪲', '🐛', '🦗'];
+BUGS.forEach((b, i) => {
+  if (prog.b.includes(i)) return;
+  const host = bugHost(b.host); if (!host) return;
+  host.classList.add('bug-host');
+  const el = document.createElement('button');
+  el.className = 'hbug'; el.type = 'button'; el.textContent = BUG_ICONS[i % BUG_ICONS.length];
+  el.setAttribute('aria-label', 'A bug! Squash it');
+  el.style.setProperty('--x', (12 + (i * 37) % 70) + '%'); el.style.setProperty('--y', (18 + (i * 53) % 60) + '%');
+  el.style.setProperty('--dur', (7 + i % 4 * 2) + 's'); el.style.animationDelay = -(i * 1.3) + 's';
+  el.addEventListener('click', e => { e.stopPropagation(); squash(i, el); });
+  host.appendChild(el);
+});
+function squash(i, el) {
+  if (prog.b.includes(i)) return;
+  const before = level(xp());
+  prog.b.push(i); save();
+  el.classList.add('splat'); setTimeout(() => el.remove(), 500);
+  navigator.vibrate?.([12, 30, 12]); SA.boom(false); SA.pluck(880, 0.05);
+  popCard(`<span class="at-i">🐞</span><div><small>Bug ${prog.b.length}/${BUGS.length} squashed · +10 XP</small><b>${BUGS[i].fact}</b></div>`, 'bugfact', 6000);
+  levelCheck(before); renderHud(true);
+  if (prog.b.length === BUGS.length) setTimeout(finale, 1400);
 }
-$('game-btn').addEventListener('click', openGame);
-$('g-go').addEventListener('click', start);
-$('g-again').addEventListener('click', start);
-$('g-x').addEventListener('click', closeGame);
-$('g-hire').addEventListener('click', () => closeGame());
-addEventListener('keydown', e => { if (e.key === 'Escape' && !game.hidden) closeGame(); });
+function finale() {
+  unlock('hunter');
+  SA.setShape('star'); SA.shockwave();
+  [0, 2, 4, 7, 9, 11].forEach((k, i) => setTimeout(() => SA.pluck([261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1318.51][k], 0.07), i * 120));
+  setTimeout(() => popCard(`<span class="at-i">🏆</span><div><small>Every bug squashed</small><b>That's the attention to detail Syed brings to production. <a href="#contact">Let's talk →</a></b></div>`, 'bugfact final', 9000), 900);
+}
+
+// Achievements panel
+const achp = $('achp');
+function openAch() {
+  SA.closeOverlays();
+  $('achp-list').innerHTML = ACH.map(a => `<li class="${prog.a.includes(a.id) ? 'got' : ''}"><span>${prog.a.includes(a.id) ? a.i : '🔒'}</span><div><b>${a.n}</b><small>${a.d}</small></div><em>+${a.xp}</em></li>`).join('');
+  $('achp-bugs').innerHTML = BUGS.map((b, i) => prog.b.includes(i)
+    ? `<li class="got"><span>🐞</span><p>${b.fact}</p></li>`
+    : `<li><span>❔</span><p>A bug is hiding somewhere in <b>${b.hint}</b>…</p></li>`).join('');
+  $('achp-sum').textContent = `Level ${level(xp())} · ${xp()} XP · ${prog.a.length}/${ACH.length} achievements · ${prog.b.length}/${BUGS.length} bugs`;
+  achp.hidden = false; $('achp-x').focus();
+}
+const closeAch = () => { achp.hidden = true; };
+$('achp-x').addEventListener('click', closeAch);
+achp.addEventListener('pointerdown', e => { if (e.target === achp) closeAch(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeAch(); });
+$('achp-reset').addEventListener('click', () => { prog = { a: [], b: [] }; save(); location.reload(); });
+hud.addEventListener('click', openAch);
+$('ach-tile').addEventListener('click', openAch);
+renderHud(false);
 
 /* ============ Gesture hint (first visit) ============ */
 const hint = $('ghint');
@@ -210,8 +314,10 @@ hint.addEventListener('click', () => hint.classList.remove('show'));
 
 /* ============ Palette entries ============ */
 SA.actions.push(
-  { g: 'Play', i: '🐞', l: 'Play: squash the bugs', k: 'game fun mini', run: openGame },
-  { g: 'Play', i: '💳', l: 'Flip the holographic card', k: 'business card qr', run: () => { $('contact').scrollIntoView({ behavior: 'smooth' }); setTimeout(flip, 700); } },
+  { g: 'Play', i: '🏆', l: 'Achievements & hidden bugs', k: 'game progress xp level', run: openAch },
+  { g: 'Play', i: '💳', l: 'Flip the holographic card', k: 'business card qr', run: () => { SA.scrollTo($('contact')); setTimeout(flipCard, 800); } },
   { g: 'Play', i: '📇', l: 'Save contact to phone (vCard)', k: 'vcf contact save', run: () => { location.href = 'Syed_Abdulla.vcf'; } },
-  { g: 'Play', i: '📡', l: 'Live from Bengaluru', k: 'weather time now live', run: () => $('live').scrollIntoView({ behavior: 'smooth' }) },
+  { g: 'Play', i: '📡', l: 'Live from Bengaluru', k: 'weather time now live', run: () => SA.scrollTo($('live')) },
 );
+
+SA.on('langchange', () => { $('lv-tz').textContent = cityOf(visitorTz); tickLive(); renderWx(); renderDep(); renderHud(false); });

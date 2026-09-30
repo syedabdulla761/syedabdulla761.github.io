@@ -19,7 +19,7 @@
 <meta name="theme-color" content="#06070b" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@500&family=Noto+Sans+Devanagari:wght@500&family=Noto+Sans+Kannada:wght@500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&family=Cairo:wght@400;600;700&family=Noto+Kufi+Arabic:wght@600;800&family=Noto+Sans+Devanagari:wght@500&family=Noto+Sans+Kannada:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
@@ -56,7 +56,7 @@
       <span class="line"><span class="reveal gold">Abdulla</span></span>
     </h1>
     <p class="role">Full-Stack Software Engineer <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot</p>
-    <p class="tag">I build <em id="typer"></em><span class="caret">|</span></p>
+    <p class="tag"><span id="tag-pre">I build</span> <em id="typer"></em><span class="caret">|</span></p>
     <div class="hero-cta">
       <a href="#work" class="btn magnetic">View my work</a>
       <a href="#contact" class="btn ghost magnetic">Let's talk</a>
@@ -191,14 +191,14 @@
       <p class="sub">Everything here updates in real time — my local time, the weather outside my window, how your timezone overlaps with mine, and how this very page is performing on your device.</p>
       <div class="tiles">
         <div class="tile t-clock"><small>Bengaluru · IST</small><div class="big mono" id="lv-time">--:--:--</div><div class="status" id="lv-status"></div></div>
-        <div class="tile t-you"><small>Your time · <span id="lv-tz"></span></small><div class="big mono" id="lv-you">--:--</div><div class="muted-s" id="lv-overlap"></div><div class="bar"><span id="lv-bar"></span></div></div>
+        <div class="tile t-you"><small><span class="i-you">Your time</span> · <span id="lv-tz"></span></small><div class="big mono" id="lv-you">--:--</div><div class="muted-s" id="lv-overlap"></div><div class="bar"><span id="lv-bar"></span></div></div>
         <div class="tile t-weather"><small>Weather in Bengaluru</small><div class="big" id="lv-temp">--°</div><div class="muted-s" id="lv-wx">Fetching live conditions…</div></div>
-        <div class="tile t-ship"><small>Building enterprise software for</small><div class="big mono" id="lv-ship">—</div><div class="muted-s"><span id="lv-days"></span> since Feb 2023 · still counting</div></div>
+        <div class="tile t-ship"><small>Building enterprise software for</small><div class="big mono" id="lv-ship">—</div><div class="muted-s"><span id="lv-days"></span> <span class="i-since">since Feb 2023 · still counting</span></div></div>
         <div class="tile t-nerd"><small>Stats for nerds · this page, on your device</small>
           <ul class="nerd"><li><b id="lv-fps">--</b><span>FPS</span></li><li><b id="lv-pts">--</b><span>particles</span></li><li><b id="lv-load">--</b><span>load time</span></li><li><b id="lv-gpu">--</b><span>GPU</span></li></ul>
           <canvas id="lv-spark"></canvas></div>
         <div class="tile t-deploy"><small>Site last deployed</small><div class="big" id="lv-dep">—</div><div class="muted-s mono" id="lv-msg"></div></div>
-        <button class="tile t-game" id="game-btn"><small>Mini-game · 20 seconds</small><div class="big">🐞 Squash the bugs</div><div class="muted-s">I've fixed 90+ in production. How many can you get?</div><span class="play">Play ▶</span></button>
+        <button class="tile t-game" id="ach-tile"><small>Your exploration</small><div class="big"><span id="at-lv">Lv 1</span> · <span id="at-xp">0</span> XP</div><div class="muted-s">🐞 <b id="at-bugs">0</b>/8 hidden bugs squashed · 🏆 <b id="at-ach">0</b>/15 achievements — every bug hides a story from my career.</div><div class="bar"><span id="at-bar"></span></div><span class="play">View ▶</span></button>
       </div>
     </div>
   </section>
@@ -227,7 +227,8 @@
             </div>
           </div>
         </div>
-        <div class="holo-actions"><button class="btn ghost" id="flip-btn">↻ Flip card</button><a class="btn ghost" href="Syed_Abdulla.vcf" download>📇 Save contact</a></div>
+        <div class="holo-hint">↔ Grab &amp; swipe the card to spin it · tap to flip</div>
+        <div class="holo-actions"><a class="btn ghost" href="Syed_Abdulla.vcf" download>📇 Save contact</a></div>
       </div>
       <div class="contact-row">
         <a class="btn magnetic" href="mailto:syedabdulla761@gmail.com">✉ syedabdulla761@gmail.com</a>
@@ -252,7 +253,7 @@
 </nav>
 
 <!-- Command palette -->
-<div id="cmdk" class="overlay" role="dialog" aria-modal="true" aria-label="Command menu" hidden>
+<div id="cmdk" class="overlay" data-lenis-prevent role="dialog" aria-modal="true" aria-label="Command menu" hidden>
   <div class="cmdk-box">
     <div class="cmdk-in"><span>⌘</span><input id="cmdk-input" placeholder="Search actions, sections, shapes…" autocomplete="off" spellcheck="false" /><kbd>esc</kbd></div>
     <ul id="cmdk-list" role="listbox"></ul>
@@ -261,7 +262,7 @@
 </div>
 
 <!-- Recruiter quick view -->
-<div id="quick" class="overlay" role="dialog" aria-modal="true" aria-label="30-second summary" hidden>
+<div id="quick" class="overlay" data-lenis-prevent role="dialog" aria-modal="true" aria-label="30-second summary" hidden>
   <div class="quick-box">
     <button class="quick-x" id="quick-x" aria-label="Close">×</button>
     <div class="eyebrow">⚡ 30-second summary</div>
@@ -286,24 +287,33 @@
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
-<!-- Mini-game -->
-<div id="game" class="overlay game" role="dialog" aria-modal="true" aria-label="Squash the bugs" hidden>
-  <div class="g-hud"><span>🐞 <b id="g-score">0</b></span><span>⏱ <b id="g-time">20</b>s</span><button id="g-x" aria-label="Close game">×</button></div>
-  <div id="g-field"></div>
-  <div class="g-card" id="g-start"><div class="eyebrow">Mini-game</div><h3>Squash the bugs 🐞</h3><p>Tap bugs before they crawl away. Careful — don't squash the ✨ features (−3)!</p><p class="g-best" id="g-best"></p><button class="btn" id="g-go">Start · 20s</button></div>
-  <div class="g-card" id="g-end" hidden><div class="eyebrow">Time's up</div><h3 id="g-title"></h3><p id="g-msg"></p><div class="q-actions"><button class="btn" id="g-again">Play again</button><a class="btn ghost" href="#contact" id="g-hire">Hire the exterminator →</a></div></div>
+<!-- Exploration HUD, achievement toasts and panel -->
+<button class="hud" id="hud" aria-label="Your achievements"><span class="hud-ring" id="hud-ring"><b id="hud-lv">1</b></span><span class="hud-t"><small>LEVEL</small>🐞 <b id="hud-bugs">0/8</b></span></button>
+<div class="ach-stack" id="ach-stack" aria-live="polite"></div>
+<div id="achp" class="overlay" data-lenis-prevent role="dialog" aria-modal="true" aria-label="Achievements" hidden>
+  <div class="quick-box achp-box">
+    <button class="quick-x" id="achp-x" aria-label="Close">×</button>
+    <div class="eyebrow">🏆 Your exploration</div>
+    <h3>Achievements</h3>
+    <p class="q-role" id="achp-sum"></p>
+    <ul class="achp-list" id="achp-list"></ul>
+    <div class="eyebrow" style="margin-top:26px">🐞 Hidden bugs — each one is a real story</div>
+    <ul class="achp-bugs" id="achp-bugs"></ul>
+    <button class="achp-reset" id="achp-reset">Reset progress</button>
+  </div>
 </div>
 
-<div class="gesture-hint" id="ghint"><span class="desk">✦ <b>Drag</b> to spin · <b>Hold</b> for a black hole · <b>Click</b> for a shockwave</span><span class="touch">✦ <b>Swipe</b> sideways to spin · <b>Hold</b> for a black hole · <b>Tap</b> for a shockwave</span></div>
+<div class="gesture-hint" id="ghint"><span class="desk">✦ <b>Drag</b> to spin · <b>Hold</b> for a black hole · <b>Click</b> for a shockwave · 🔇 turn on <b>sound</b> to play</span><span class="touch">✦ <b>Swipe</b> sideways to spin · <b>Hold</b> for a black hole · <b>Tap</b> for a shockwave</span></div>
 
 <!-- Terminal easter egg -->
-<div id="term" aria-hidden="true">
+<div id="term" data-lenis-prevent aria-hidden="true">
   <div class="term-bar"><i></i><i></i><i></i><span>syed@portfolio: ~</span><button id="term-x" aria-label="Close">×</button></div>
   <div id="term-out"></div>
   <div class="term-in"><span>❯</span><input id="term-input" autocomplete="off" spellcheck="false" placeholder="type 'help'" /></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
 <script type="module" src="main.js"></script>
 <script type="module" src="extras.js"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
