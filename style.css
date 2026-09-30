@@ -177,3 +177,10 @@ kbd{border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--g
 .term-in input{flex:1;background:none;border:0;outline:0;color:var(--fg);font:inherit}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.title .reveal{transform:none}}
+
+.nav-r{display:flex;gap:8px;align-items:center}
+.btn-sm.icon{background:none;color:var(--fg);cursor:pointer;min-width:38px;font-size:14px;padding:7px 10px}
+.btn-sm.icon:hover{background:var(--gold);color:#000}
+.ar,.ar *{font-family:'Noto Naskh Arabic',var(--body)!important;letter-spacing:0!important}
+h2.ar{line-height:1.3}
+.nav nav a.ar{font-size:15px}

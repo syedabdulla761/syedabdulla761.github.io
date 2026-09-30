@@ -201,6 +201,7 @@ function setShape(key) {
   if (!shapes[key]) return;
   currentKey = key; target = shapes[key]; morphT = 0;
   document.getElementById('shape-label').textContent = labels[key];
+  chime(Object.keys(labels).indexOf(key));
 }
 
 // ---- Animation loop ----
@@ -356,7 +357,7 @@ const cmds = {
   impact: () => '−42% grid bundle · 100+ enterprise customers · 130K-point charts\n90+ bugs fixed · 89 backports · +40% WCAG compliance · 0 spillovers',
   edu: () => 'B.Tech CSE, UVCE Bengaluru (2019–23) · CGPA 9.09 · Siemens Scholar',
   contact: () => 'email    syedabdulla761@gmail.com\nphone    +91 88676 18049\ngithub   github.com/syedabdulla761',
-  resume: () => { location.href = 'Syed_Abdulla_Resume.docx'; return 'Downloading résumé…'; },
+  resume: () => { location.href = 'Syed_Abdulla_Resume.pdf'; return 'Downloading résumé…'; },
   clear: () => { out.innerHTML = ''; return null; },
   exit: () => { toggleTerm(false); return null; },
   sudo: () => 'Nice try. 😄 But you can hire me instead → type <span class="g">contact</span>',
@@ -381,3 +382,57 @@ addEventListener('keydown', e => {
 });
 inp.addEventListener('keydown', e => { if (e.key === 'Enter') { run(inp.value); inp.value = ''; } });
 document.getElementById('term-x').onclick = () => toggleTerm(false);
+
+/* ============ Ambient sound (WebAudio synth, off by default) ============ */
+let actx = null, master = null, soundOn = false;
+function initAudio() {
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  master = actx.createGain(); master.gain.value = 0; master.connect(actx.destination);
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.connect(master);
+  [55, 82.4, 110.3, 164.8].forEach((f, i) => { // A-minor drone with slow detune shimmer
+    const o = actx.createOscillator(), g = actx.createGain(), l = actx.createOscillator(), lg = actx.createGain();
+    o.type = i % 2 ? 'triangle' : 'sine'; o.frequency.value = f; g.gain.value = 0.18 / (i + 1);
+    l.frequency.value = 0.07 + i * 0.03; lg.gain.value = 1.8; l.connect(lg); lg.connect(o.detune);
+    o.connect(g); g.connect(lp); o.start(); l.start();
+  });
+}
+// Pentatonic chime per shape
+function chime(i) {
+  if (!soundOn || !actx) return;
+  const notes = [440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5], t = actx.currentTime;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(notes[i % notes.length], t);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + 2.3);
+}
+const sndBtn = document.getElementById('snd');
+sndBtn.onclick = () => {
+  if (!actx) initAudio();
+  soundOn = !soundOn; actx.resume();
+  master.gain.setTargetAtTime(soundOn ? 0.5 : 0, actx.currentTime, 0.6);
+  sndBtn.textContent = soundOn ? '🔊' : '🔇';
+  if (soundOn) chime(0);
+};
+
+/* ============ English ⇄ العربية ============ */
+const AR = [
+  ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
+  ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
+  ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
+  ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'],
+  ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند ودول الخليج</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
+  ['#about h2', 'هندسة برمجيات بروح <span class="gold">المسؤولية</span> والدقة والإتقان.'],
+  ['#impact h2', 'نتائج <span class="gold">تُنجَز</span> فعلًا.'],
+  ['#work h2', 'insightsoftware <span class="muted">· منصة Logi Symphony</span>'],
+  ['#skills h2', 'أدوات <span class="gold">أتقنها</span>.'],
+  ['#edu h2', '<span class="gold">تميّز</span> أكاديمي.'],
+  ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
+  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير الشامل (Full-Stack).'],
+].map(([sel, ar]) => { const el = document.querySelector(sel); return el && { el, ar, en: el.innerHTML }; }).filter(Boolean);
+let isAr = false;
+document.getElementById('lang').onclick = e => {
+  isAr = !isAr;
+  AR.forEach(({ el, ar, en }) => { el.innerHTML = isAr ? ar : en; el.toggleAttribute('dir', isAr); if (isAr) el.setAttribute('dir', 'rtl'); el.classList.toggle('ar', isAr); });
+  document.documentElement.lang = isAr ? 'ar' : 'en';
+  e.currentTarget.textContent = isAr ? 'EN' : 'ع';
+};
