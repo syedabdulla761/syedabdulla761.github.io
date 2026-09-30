@@ -30,94 +30,16 @@ const BLOOM = isMobile ? 0.95 : 0.75;
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
-/* ============ Tunnel scroll: the page never moves — you travel through it ============ */
-// Every section is a fixed panel. Scrolling scrubs a timeline: between sections you fly down
-// a 3D tunnel (the next section grows out of the vanishing point, blurred, then sharpens while
-// the current one swells past the camera). Long sections scroll normally while you're parked in them.
+/* ============ Scrolling: normal page, gently smoothed on desktop ============ */
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const tunnelOn = !reducedMotion;
 const touchDev = matchMedia('(hover: none)').matches;
-const panels = [...document.querySelectorAll('main > section')].map(sec => {
-  const layer = document.createElement('div'); layer.className = 'layer';
-  [...sec.children].forEach(c => { if (!c.matches('.scroll-hint')) layer.appendChild(c); });
-  sec.insertBefore(layer, sec.firstChild);
-  return { sec, layer, h: 0, arrive: 0, leave: 0 };
-});
-const spacer = document.createElement('div'); spacer.id = 'tunnel-space'; spacer.setAttribute('aria-hidden', 'true');
-document.body.appendChild(spacer);
-if (tunnelOn) document.documentElement.classList.add('tunnel');
-const TRAVEL = () => innerHeight * 1.15, HOLD = () => innerHeight * 0.35;
-let lastTY = -1, curIdx = -1, travelT = 1;
-function measure() {
-  if (!tunnelOn) return;
-  const vh = innerHeight; let y = 0;
-  panels.forEach((p, i) => {
-    const was = p.sec.classList.contains('on');
-    p.sec.classList.add('on');
-    p.h = Math.max(p.layer.scrollHeight, vh);
-    if (!was) p.sec.classList.remove('on');
-    if (i) y += TRAVEL();
-    p.arrive = Math.round(y); y += Math.max(0, p.h - vh) + HOLD(); p.leave = Math.round(y);
-  });
-  spacer.style.height = Math.round(y + vh) + 'px';
-  lastTY = -1;
-}
-measure();
-addEventListener('resize', measure); addEventListener('load', measure);
-document.fonts?.ready.then(measure);
-function updateTunnel() {
-  if (!tunnelOn) return;
-  const y = window.scrollY, vh = innerHeight;
-  if (y === lastTY) return; lastTY = y;
-  let k = 0; while (k < panels.length - 1 && y >= panels[k + 1].arrive) k++;
-  let from = -1, t = 1;
-  if (k < panels.length - 1 && y > panels[k].leave) { from = k; k = k + 1; t = (y - panels[from].leave) / TRAVEL(); }
-  travelT = from >= 0 ? t : 1;
-  panels.forEach((p, i) => {
-    const show = i === k || i === from;
-    p.sec.classList.toggle('on', show);
-    if (!show) return;
-    const maxOff = Math.max(0, p.h - vh);
-    let off, scale = 1, op = 1, blur = 0;
-    // phones skip the blur filter for performance, so they cross-fade faster to avoid overlap
-    if (i === from) { off = maxOff; const e = t * t; scale = 1 + e * 2.4; op = 1 - Math.min(1, t * (touchDev ? 2.6 : 1.6)); blur = t * 16; }
-    else if (from >= 0) { off = 0; const e = 1 - Math.pow(1 - t, 3); scale = 0.18 + 0.82 * e; op = Math.max(0, Math.min(1, (t - (touchDev ? 0.42 : 0.2)) * (touchDev ? 2 : 1.7))); blur = (1 - e) * 14; }
-    else off = Math.min(Math.max(0, y - p.arrive), maxOff);
-    p.layer.style.transformOrigin = `50% ${Math.round(off + vh / 2)}px`;
-    p.layer.style.transform = `translate3d(0,${-Math.round(off)}px,0) scale(${scale.toFixed(4)})`;
-    p.layer.style.opacity = op < 1 ? op.toFixed(3) : '';
-    p.layer.style.filter = blur > 0.4 && !touchDev ? `blur(${blur.toFixed(1)}px)` : '';
-    p.sec.style.zIndex = i === from ? 3 : 2;
-  });
-  const cur = from >= 0 && t < 0.5 ? from : k;
-  panels.forEach((p, i) => p.sec.classList.toggle('cur', i === cur));
-  if (cur !== curIdx) { curIdx = cur; arrive(panels[cur].sec); }
-}
-function arrive(sec) {
-  setShape(sec.dataset.shape);
-  document.querySelectorAll('.nav nav a, .dock a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + sec.id));
-  SA.emit('section', sec.id);
-}
-addEventListener('scroll', updateTunnel, { passive: true });
-
-// Inertial smooth scrolling on desktop (Lenis); phones keep native momentum scrolling
 let lenis = null;
 if (window.Lenis && !reducedMotion && !touchDev) {
-  lenis = new window.Lenis({ lerp: 0.08, anchors: false });
+  lenis = new window.Lenis({ lerp: 0.12, anchors: true });
   const lraf = t => { lenis.raf(t); requestAnimationFrame(lraf); };
   requestAnimationFrame(lraf);
 }
-const scrollToEl = el => {
-  const p = panels.find(q => q.sec === el || q.sec.contains(el));
-  if (!tunnelOn || !p) return el.scrollIntoView({ behavior: 'smooth' });
-  lenis ? lenis.scrollTo(p.arrive, { duration: 2.2 }) : window.scrollTo({ top: p.arrive, behavior: 'smooth' });
-};
-// In-page links travel through the tunnel instead of jumping
-document.addEventListener('click', e => {
-  const a = e.target.closest('a[href^="#"]'); if (!a) return;
-  const el = document.getElementById(a.getAttribute('href').slice(1)); if (!el) return;
-  e.preventDefault(); scrollToEl(el);
-}, true);
+const scrollToEl = el => lenis ? lenis.scrollTo(el, { duration: 1.2 }) : el.scrollIntoView({ behavior: 'smooth' });
 
 // ---- Shape generators (each returns Float32Array N*3) ----
 function textShape(str) {
@@ -260,7 +182,6 @@ function radarShape() {
 }
 
 const shapes = {};
-const labelsAr = { text: '01 / كوكبة', star: '02 / نجمة الخاتم', wave: '03 / محيط البيانات', grid: '04 / AG-GRID', knot: '05 / عقدة طوقية', helix: '06 / حلزون', radar: '07 / رادار مباشر', globe: '08 / بنغالورو ← الخليج' };
 const labels = { text: '01 / CONSTELLATION', star: '02 / KHATAM STAR', wave: '03 / DATA OCEAN', grid: '04 / AG-GRID', knot: '05 / TORUS KNOT', helix: '06 / HELIX', radar: '07 / LIVE RADAR', globe: '08 / BENGALURU → GCC' };
 
 // ---- Geometry ----
@@ -314,31 +235,7 @@ const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Buf
 const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, color: 0x8d8a84, transparent: true, opacity: 0.6 }));
 scene.add(stars);
 
-// The tunnel: rings of light and longitudinal guide lines converging on a glowing singularity
-const TUN_R = 12.5, RINGS = 44, PER = isMobile ? 64 : 110, GAP = 7, TUN_LEN = RINGS * GAP, TUN_NEAR = 20 - TUN_LEN;
-const ringPos = new Float32Array(RINGS * PER * 3), ringCol = new Float32Array(RINGS * PER * 3);
-const cGold = new THREE.Color(0xe8b04b), cTeal = new THREE.Color(0x2dd4bf);
-for (let r = 0; r < RINGS; r++) for (let j = 0; j < PER; j++) {
-  const i = (r * PER + j) * 3, a = j / PER * Math.PI * 2 + r * 0.21, rad = TUN_R * (1 + rand(-0.05, 0.05));
-  ringPos[i] = Math.cos(a) * rad; ringPos[i + 1] = Math.sin(a) * rad; ringPos[i + 2] = 20 - r * GAP;
-  const c = r % 4 === 0 ? cTeal : cGold; ringCol[i] = c.r; ringCol[i + 1] = c.g; ringCol[i + 2] = c.b;
-}
-const ringGeo = new THREE.BufferGeometry();
-ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPos, 3)); ringGeo.setAttribute('color', new THREE.BufferAttribute(ringCol, 3));
-const tunnel = new THREE.Group();
-tunnel.add(new THREE.Points(ringGeo, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })));
-const LN = 32, linePos = new Float32Array(LN * 6);
-for (let i = 0; i < LN; i++) { const a = i / LN * Math.PI * 2, x = Math.cos(a) * TUN_R, y = Math.sin(a) * TUN_R; linePos.set([x, y, 22, x, y, TUN_NEAR], i * 6); }
-const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
-tunnel.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xe8b04b, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false })));
-const gc = document.createElement('canvas'); gc.width = gc.height = 128;
-const gx = gc.getContext('2d'), grd = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
-grd.addColorStop(0, 'rgba(255,232,180,1)'); grd.addColorStop(0.22, 'rgba(232,176,75,.45)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
-gx.fillStyle = grd; gx.fillRect(0, 0, 128, 128);
-const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gc), blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true, opacity: 0.3 }));
-core.position.set(0, 0, -140); core.scale.setScalar(46); tunnel.add(core);
-scene.add(tunnel);
-let sv = 0, prevSY = window.scrollY, tunZ = 0; // smoothed scroll velocity (px / frame), tunnel travel
+let sv = 0, prevSY = window.scrollY; // smoothed scroll velocity (px / frame)
 
 let burst = 0, hole = 0, holing = false;
 let target = null, currentKey = 'text', morphT = 0;
@@ -349,7 +246,7 @@ const userRot = new THREE.Vector2(), userVel = new THREE.Vector2();
 function setShape(key) {
   if (!shapes[key]) return;
   currentKey = key; target = shapes[key]; morphT = 0;
-  document.getElementById('shape-label').textContent = (document.documentElement.lang === 'ar' ? labelsAr : labels)[key];
+  document.getElementById('shape-label').textContent = labels[key];
   chime(Object.keys(labels).indexOf(key));
 }
 
@@ -416,24 +313,11 @@ function tick() {
   camera.position.x += (mouse.x * 1.5 - camera.position.x) * 0.03;
   camera.position.y += (mouse.y * 1.0 - camera.position.y) * 0.03;
   camera.lookAt(0, 0, 0);
-  // tunnel flight: rings rush toward the camera as you scroll, faster mid-transition
-  const sy = window.scrollY; sv += ((sy - prevSY) - sv) * 0.18; prevSY = sy;
-  const inTransit = travelT < 1, boost = inTransit ? 2.6 : 1;
-  const spd = 0.02 + sv * 0.035 * boost;
-  tunZ += spd;
-  for (let r = 0; r < RINGS; r++) {
-    const z = (((20 - r * GAP + tunZ) - TUN_NEAR) % TUN_LEN + TUN_LEN) % TUN_LEN + TUN_NEAR;
-    for (let j = 0, b = r * PER * 3 + 2; j < PER; j++, b += 3) ringPos[b] = z;
-  }
-  ringGeo.attributes.position.needsUpdate = true;
-  tunnel.rotation.z += 0.0006 + sv * 0.0003 * boost;
-  for (let i = 0, k = 2; i < STAR_N; i++, k += 3) { let z = starPos[k] + spd * 0.6; if (z > 22) z -= 162; else if (z < -140) z += 162; starPos[k] = z; }
+  // subtle depth: the star field drifts slowly and nudges forward a little when you scroll
+  const sy = window.scrollY; sv += ((sy - prevSY) - sv) * 0.15; prevSY = sy;
+  const spd = 0.008 + Math.min(Math.abs(sv), 60) * 0.006;
+  for (let i = 0, k = 2; i < STAR_N; i++, k += 3) { let z = starPos[k] + spd; if (z > 22) z -= 162; starPos[k] = z; }
   sg.attributes.position.needsUpdate = true;
-  core.material.opacity = 0.18 + (inTransit ? Math.sin(travelT * Math.PI) * 0.45 : 0);
-  const fov = 55 + Math.min(Math.abs(sv) * 0.12, 6) + (inTransit ? Math.sin(travelT * Math.PI) * 7 : 0);
-  if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * 0.12; camera.updateProjectionMatrix(); }
-  world.rotation.x += Math.max(-0.2, Math.min(0.2, sv * 0.003));
-  updateTunnel();
 
   composer ? composer.render() : renderer.render(scene, camera);
   requestAnimationFrame(tick);
@@ -498,7 +382,6 @@ const SA = window.SA = {
   setShape: k => setShape(k),
   shockwave: () => { aim.set(0, 0); burst = 1.4; },
   scrollTo: el => scrollToEl(el),
-  remeasure: () => measure(),
   tone(freq, dur = 0.3, type = 'sine', vol = 0.1, slideTo) {
     if (!soundOn || !actx) return;
     const t0 = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
@@ -525,7 +408,7 @@ let pct = 0; const pi = setInterval(() => { pct = Math.min(pct + Math.random() *
 const sections = [...document.querySelectorAll('section[data-shape]')];
 const navLinks = [...document.querySelectorAll('.nav nav a')];
 const io = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting || tunnelOn) return;
+  if (!e.isIntersecting) return;
   setShape(e.target.dataset.shape);
   navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
 }), { threshold: 0.45 });
@@ -747,13 +630,15 @@ sndBtn.onclick = () => {
 // Tech names stay in English, as is standard in Gulf tech hiring. Leaves are targeted so live
 // values (clocks, counters, hidden bugs) inside their parents survive the swap.
 const AR_SRC = [
+  // Everyday Arabic where a native speaker would naturally use it; industry terms
+  // (backports, sprints, breaking changes, Frontend/Backend…) stay in English, as Gulf teams say them.
   ['.title .reveal', ['سيد', 'عبدالله']], ['#quick h3', 'سيد عبدالله'], ['.hud-t small', 'المستوى'],
   ['.cmdk-foot', '<span><kbd>↑</kbd><kbd>↓</kbd> تنقّل</span><span><kbd>↵</kbd> اختيار</span>'],
   ['#achp .eyebrow', ['🏆 استكشافك', '🐞 الأخطاء المخفية — كل واحد منها قصة حقيقية']], ['#achp h3', 'الإنجازات'], ['#achp-reset', 'إعادة ضبط التقدم'],
   ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
   ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
   // hero
-  ['.role', 'مهندس برمجيات متكامل (Full-Stack) <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
+  ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
   ['#tag-pre', 'أبني'],
   ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'], ['#quick-btn', '⚡ ملخص في 30 ثانية'],
   ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند ودول الخليج</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
@@ -762,88 +647,86 @@ const AR_SRC = [
   ['#about .eyebrow', '01 — نبذة عني'],
   ['#about h2', 'هندسة برمجيات بروح <span class="gold">المسؤولية</span> والدقة والإتقان.'],
   ['#about .glass > p', [
-    'مهندس برمجيات بخبرة تزيد على <b>3 سنوات</b>، متخصص في بناء تطبيقات React عالية الأداء وتصوير البيانات للمؤسسات — وأعمل الآن على المنظومة كاملة مع <b>Spring Boot</b>.',
-    'أتولى بشكل مستقل ميزات عالية الأثر من البداية إلى النهاية — من ترحيل المكتبات وتوحيد الواجهات إلى الامتثال لمعايير WCAG — مع تسليم السبرنتات <b>دون أي تأخير</b>.']],
-  ['#about .badges span', ['🎓 UVCE علوم الحاسب 2023 · المعدل 9.09', '🏅 منحة سيمنس', '⭐ «يفوق التوقعات» مرتين', '🚀 ترقية إلى مهندس برمجيات خلال عامين']],
+    'مهندس برمجيات بخبرة تزيد على <b>3 سنوات</b>، متخصص في تطبيقات React عالية الأداء و Data Visualization للمؤسسات — وأعمل الآن على الـ Full-Stack مع <b>Spring Boot</b>.',
+    'أتولى الميزات المهمة بنفسي من البداية إلى النهاية — من ترقية المكتبات وتوحيد الواجهات إلى معايير WCAG — مع تسليم كل sprint في موعده <b>دون أي تأخير</b>.']],
+  ['#about .badges span', ['🎓 UVCE علوم الحاسب 2023 · المعدل 9.09', '🏅 منحة سيمنس', '⭐ «يفوق التوقعات» مرتين', '🚀 ترقية إلى Software Engineer خلال عامين']],
   ['#about blockquote', '«ملكية حقيقية للعمل، ومهارة تقنية، وروح تعاون.» <cite>— تقييم المدير</cite>'],
   // impact
   ['#impact .eyebrow', '02 — الإنجازات بالأرقام'],
   ['#impact h2', 'نتائج <span class="gold">تُنجَز</span> فعلًا.'],
   ['#impact .lbl', [
-    'تقليص حجم حزمة الجدول (بعد الضغط) بعد الترحيل إلى AG-Grid v35',
+    'تقليص حجم الـ grid bundle (gzipped) بعد الترقية إلى AG-Grid v35',
     'عميل مؤسسي يستخدم منصة Playground التي بنيتها من الصفر',
-    'نقطة بيانات تُعرض بسلاسة بعد إصلاح تعطّل المتصفح في المخططات الخطية',
-    'خطأ تم إصلاحه · 89 نقلًا للإصلاحات عبر 11 إصدارًا مدعومًا',
-    'تحسّن في الامتثال لمعايير WCAG — أكثر من 35 إصلاحًا خلال ربع سنة',
-    'إيداعًا من وكلاء الذكاء الاصطناعي تمت مراجعتها · أكثر من 20 مهمة سُلّمت بسير عمل وكيلي']],
+    'نقطة بيانات في line charts تُعرض بسلاسة بعد إصلاح تعطّل المتصفح',
+    'خطأ تم إصلاحه · 89 backports عبر 11 إصدارًا مدعومًا',
+    'تحسّن في التوافق مع WCAG — أكثر من 35 إصلاحًا خلال ربع سنة',
+    'commit من AI agents تمت مراجعتها · أكثر من 20 مهمة سُلّمت بـ agentic workflows']],
   // experience
   ['#work .eyebrow', '03 — الخبرات'],
   ['#work h2', 'insightsoftware <span class="muted">· Logi Symphony</span>'],
   ['#work .sub', 'فبراير 2023 – الآن · بنغالورو · <a href="https://playground.logi-symphony.com" target="_blank" rel="noopener">playground.logi-symphony.com ↗</a>'],
-  ['#work .tl-head h3', ['مهندس برمجيات', 'مهندس برمجيات مشارك', 'متدرب في هندسة البرمجيات']],
   ['#work .tl-head span', ['سبتمبر 2025 – الآن', 'يوليو 2023 – أغسطس 2025', 'فبراير 2023 – يونيو 2023']],
   ['#work .card h4', [
-    'ترحيل AG-Grid من v31 إلى v35', 'تنظيم المجلدات — الواجهة الخلفية بـ Spring Boot', 'تجربة المجلدات — الواجهة',
-    'تضمين التقارير ذاتية الخدمة', 'توحيد Symphony والصفحة الرئيسية', 'ذكاء Playground الاصطناعي والعروض التوضيحية',
-    'الامتثال لمعايير WCAG', 'إصلاح حرج لخطأ IIS 404.11', 'Source V2 والمرشِّحات',
-    'تطبيق Playground — من الصفر', 'فوز في الهاكاثون — «Composer»', 'SonarCloud ومخططات بـ 130 ألف نقطة',
-    'ترحيل السجلات: من Raize إلى Serilog']],
+    'ترقية AG-Grid من v31 إلى v35', 'تنظيم المجلدات — Backend', 'تنظيم المجلدات — واجهة المستخدم',
+    'Self-Service Report Embedding', 'توحيد Symphony والصفحة الرئيسية', 'Playground AI والعروض التوضيحية',
+    'إمكانية الوصول (WCAG)', 'إصلاح حرج لخطأ IIS 404.11', 'Source V2 والفلاتر',
+    'تطبيق Playground — من الصفر', 'فوز في الهاكاثون — «Composer»', 'SonarCloud و charts بـ 130 ألف نقطة',
+    'Logging: من Raize إلى Serilog']],
   ['#work .card p', [
-    'قدت ترقية المكتبة على مستوى المؤسسة عبر أكثر من 15 وحدة. أعددت دراسة تغطي أكثر من 50 تغييرًا جذريًا وخارطة طريق من 17 مهمة، ورحّلت 58 ملف TypeScript وأكثر من 30 عارض خلايا مخصصًا إلى البنية المعيارية في v35.',
-    'كيانات JPA وواجهات REST و3 أدوار على مستوى المجلد عبر مُقيِّم ACL مخصص في Spring Security. مجلدات خاصة لكل مستخدم (~4 آلاف سطر): تجهيز قائم على الأحداث، وترحيل بيانات عبر Liquibase، ونقل ذري قائم على المشاركة.',
-    'شريط جانبي لشجرة المكتبة مع مسار التنقل، ونوافذ إنشاء المجلدات وتعديلها مع شارات مجلدات النظام، وتنقّل يبدأ بالمجلدات مع أدوار الصلاحيات.',
-    'سلّمت بمفردي تضمين التقارير ذاتية الخدمة من الدراسة الأولية حتى تسليم التوثيق — Embed Manager وأحداث SDK ومقتطفات التضمين.',
-    'قدت إعادة تصميم الصفحة الرئيسية لتصبح واجهة مركّزة على المهام مع دعم السمات، ودمجت أكثر من 5 مسارات إدارية في تجربة موحّدة.',
-    'دمجت روبوت المحادثة بالذكاء الاصطناعي (إنشاء المرئيات، أسئلة البيانات، Bot API)، وعروضًا للتقارير الدقيقة وCrystal Reports والعلامة البيضاء، ونشرًا تجريبيًا لكل فرع عبر GitHub Actions.',
-    'أنهيت ديون إمكانية الوصول لربع سنة كامل — تعارضات aria-hidden وtabindex، وأنماط قارئ الشاشة باستخدام Blueprint.js في لوحات المعلومات ومحرر المصادر والقوائم.',
-    'شخّصت أحرفًا مُرمَّزة في الروابط المركّبة كانت تعطّل عمليات النشر على Windows — إصلاح شمل 100% من العملاء على Windows.',
-    'تبويب الاتصالات (واجهة شجرية) وتبويب الملفات واللوحة الجانبية لـ Source V2. المرحلة الثانية من المرشِّح الهرمي ولوحة المرشِّحات ذات التطبيق التلقائي — دون أي تأخير عبر أكثر من 6 سبرنتات.',
-    'بنيت منصة Playground الموجّهة للعملاء من الأساس، ويستخدمها الآن أكثر من 100 عميل مؤسسي لاستكشاف المنتج.',
-    'قدت تطوير الواجهة لميزة جديدة في الهاكاثون، واعتُمدت لاحقًا ضمن خارطة طريق المنتج.',
-    'خفّضت أخطاء SonarCloud عالية الخطورة إلى الصفر، وأصلحت تعطّل المتصفح في مخططات تعرض أكثر من 130 ألف نقطة، وعالجت مشكلات النشر في K8s/Docker وCentOS/PostgreSQL.',
-    'رحّلت مكتبة السجلات في المنتج، مما حسّن قابلية الصيانة.']],
-  ['#work .card .kpi', ['−42% من الحزمة', '~4 آلاف سطر', 'من البداية للنهاية', 'تسليم فردي', 'من 5+ إلى 1', 'روبوت ذكاء اصطناعي', '+40% امتثال', '100% من مستخدمي Windows', '0 تأخير', '+100 عميل', '🏆 ضمن خارطة الطريق', '0 أخطاء حرجة']],
-  // skills
+    'قدت ترقية مكتبة الـ grid في أكثر من 15 module. كتبت spike document يغطي أكثر من 50 breaking change مع roadmap من 17 مهمة، ونقلت 58 ملف TypeScript وأكثر من 30 custom cell renderer إلى بنية v35 الجديدة.',
+    'JPA entities و REST APIs و3 أدوار صلاحيات على مستوى المجلد عبر Spring Security ACL. مجلدات خاصة لكل مستخدم (~4K LOC): event-driven provisioning و Liquibase backfill ونقل آمن للملفات عند المشاركة.',
+    'شريط جانبي لشجرة المكتبة مع breadcrumbs، ونوافذ لإنشاء المجلدات وتعديلها، وتنقّل يبدأ بالمجلدات مع أدوار الصلاحيات.',
+    'سلّمت هذه الميزة بمفردي من الـ spike حتى تسليم التوثيق — Embed Manager و SDK events و embed snippets.',
+    'قدت إعادة تصميم الصفحة الرئيسية لتصبح واجهة تركّز على المهام مع دعم الـ themes، ودمجت أكثر من 5 مسارات إدارية في تجربة واحدة.',
+    'دمجت الـ AI chatbot (إنشاء المرئيات، أسئلة على البيانات، Bot API)، وعروض pixel-perfect و Crystal Reports و white-labelling، مع preview deploy لكل branch عبر GitHub Actions.',
+    'أنهيت ديون إمكانية الوصول لربع سنة كامل (أكثر من 35 إصلاحًا) — مشاكل aria-hidden و tabindex، ودعم قارئ الشاشة باستخدام Blueprint.js في الـ dashboards والقوائم.',
+    'اكتشفت أن encoded characters في الـ URLs كانت تعطّل النشر على Windows — إصلاح أثّر على 100% من عملاء Windows.',
+    'Connections tab و File tab والـ right panel لـ Source V2. وسلّمت Hierarchical Filter و Auto-Apply Filter Panel دون أي تأخير عبر أكثر من 6 sprints.',
+    'بنيت منصة Playground للعملاء من الصفر، ويستخدمها الآن أكثر من 100 عميل مؤسسي لاستكشاف المنتج.',
+    'قدت تطوير الـ frontend لميزة جديدة في الهاكاثون، واعتُمدت لاحقًا ضمن خطة المنتج.',
+    'خفّضت أخطاء SonarCloud عالية الخطورة إلى الصفر، وأصلحت تعطّل المتصفح في charts تعرض أكثر من 130 ألف نقطة، وحللت مشاكل النشر في K8s/Docker و CentOS/PostgreSQL.',
+    'نقلت مكتبة الـ logging في المنتج إلى Serilog، مما سهّل الصيانة.']],
+  ['#work .card .kpi', ['−42% bundle', '~4K LOC', 'من البداية للنهاية', 'تسليم فردي', 'من 5+ إلى 1', 'AI chatbot', '+40% WCAG', '100% من عملاء Windows', 'دون تأخير', '+100 عميل', '🏆 ضمن خطة المنتج', '0 high-severity']],
+  // skills (group names stay in English: Frontend, Backend…)
   ['#skills .eyebrow', '04 — المهارات'],
   ['#skills h2', 'أدوات <span class="gold">أتقنها</span>.'],
-  ['#skills .skill h4', ['الواجهات الأمامية', 'الواجهات الخلفية', 'البنية التحتية والأدوات', 'سير عمل يعتمد على الذكاء الاصطناعي']],
   // education
   ['#edu .eyebrow', '05 — التعليم والتقدير'],
   ['#edu h2', '<span class="gold">تميّز</span> أكاديمي.'],
-  ['#edu .sub', 'بكالوريوس التقنية في علوم وهندسة الحاسب<br/>كلية فيسفيسفارايا الجامعية للهندسة (UVCE)، بنغالورو · 2019 – 2023'],
+  ['#edu .sub', 'بكالوريوس (B.Tech) في علوم وهندسة الحاسب<br/>University Visvesvaraya College of Engineering (UVCE)، بنغالورو · 2019 – 2023'],
   ['#edu .ring > span', ['المعدل التراكمي', 'الصف الثاني عشر', 'الصف العاشر', 'منحة سيمنس']],
   ['#edu .ring > b', [null, null, null, 'كاملة']],
   ['#edu .langs span', ['<b>English</b> احترافي', '<b class="deva">हिन्दी</b> احترافي', '<b class="kan">ಕನ್ನಡ</b> اللغة الأم', '<b>తెలుగు</b> محادثة']],
   // live
   ['#live .eyebrow', '<span class="live-dot"></span>06 — الآن'],
   ['#live h2', 'مباشرة من <span class="gold">بنغالورو</span>.'],
-  ['#live .sub', 'كل ما هنا يتحدّث لحظيًا — توقيتي المحلي، والطقس خارج نافذتي، ومدى تقاطع منطقتك الزمنية مع منطقتي، وأداء هذه الصفحة على جهازك.'],
+  ['#live .sub', 'كل ما هنا يتحدّث لحظيًا — الوقت عندي، والطقس في بنغالورو، والساعات المشتركة بين توقيتك وتوقيتي، وأداء هذه الصفحة على جهازك.'],
   ['#live .t-clock small', 'بنغالورو · توقيت الهند'], ['#live .i-you', 'توقيتك'], ['#live .t-weather small', 'الطقس في بنغالورو'],
-  ['#live .t-ship small', 'أبني برمجيات المؤسسات منذ'], ['#live .i-since', 'منذ فبراير 2023 · والعدّاد مستمر'],
-  ['#live .t-nerd small', 'إحصاءات للمهتمين · هذه الصفحة على جهازك'], ['#live .nerd span', ['إطار/ث', 'جسيم', 'زمن التحميل', 'المعالج الرسومي']],
-  ['#live .t-deploy small', 'آخر نشر للموقع'], ['#ach-tile small', 'استكشافك'],
-  ['#ach-tile .muted-s', '🐞 <b id="at-bugs">0</b>/8 أخطاء مخفية تم سحقها · 🏆 <b id="at-ach">0</b>/15 إنجازًا — كل خطأ يخفي قصة من مسيرتي.'],
+  ['#live .t-ship small', 'أعمل في برمجيات المؤسسات منذ'], ['#live .i-since', 'منذ فبراير 2023 · والعدّاد مستمر'],
+  ['#live .t-nerd small', 'Stats for nerds · هذه الصفحة على جهازك'], ['#live .nerd span', ['FPS', 'Particles', 'وقت التحميل', 'GPU']],
+  ['#live .t-deploy small', 'آخر تحديث للموقع'], ['#ach-tile small', 'استكشافك'],
+  ['#ach-tile .muted-s', '🐞 <b id="at-bugs">0</b>/8 أخطاء مخفية · 🏆 <b id="at-ach">0</b>/15 إنجازًا — كل خطأ يخفي قصة من مسيرتي.'],
   ['#ach-tile .play', 'عرض ◀'],
   // contact
   ['#contact .eyebrow', '07 — تواصل'],
   ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
-  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير المتكامل (Full-Stack).'],
-  ['.holo-hint', '↔ اسحب البطاقة لتدويرها · انقر لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
+  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص العمل في Frontend و Full-Stack.'],
+  ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
   ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
   ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
-  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · صُمّم بـ Three.js و JavaScript · <span class="desk">انقر على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للطرفية</span><span class="touch">انقر على مساحة فارغة لموجة صادمة · أمِل هاتفك</span>`],
+  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للـ terminal</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
   // chrome
   ['.dock a', ['<span>⌂</span>الرئيسية', '<span>◉</span>مباشر', '<span>▤</span>الخبرات', '<span>✉</span>تواصل']], ['#dock-k', '<span>⌘</span>القائمة'],
-  ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطولًا</b> لثقب أسود · <b>انقر</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب أفقيًا</b> للتدوير · <b>اضغط مطولًا</b> لثقب أسود · <b>انقر</b> لموجة صادمة</span>'],
+  ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة</span>'],
   // 30-second summary
-  ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'مهندس برمجيات متكامل · insightsoftware'],
-  ['#quick dt', ['الخبرة', 'التقنيات الأساسية', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع']],
+  ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'Full-Stack Software Engineer · insightsoftware'],
+  ['#quick dt', ['الخبرة', 'التقنيات', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع']],
   ['#quick dd', [
-    'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية إلى مهندس برمجيات خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
-    'ذكاء الأعمال وتصوير البيانات للمؤسسات (Logi Symphony)',
-    'تقليص حزمة الجدول 42% · منصة Playground يستخدمها أكثر من 100 عميل مؤسسي · تحسين الامتثال لـ WCAG بنسبة 40% · دون أي تأخير في السبرنتات',
+    'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
+    'Enterprise BI و Data Visualization (Logi Symphony)',
+    'تقليص الـ grid bundle بنسبة 42% · منصة Playground يستخدمها أكثر من 100 عميل مؤسسي · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
-    'الإنجليزية، الهندية، الكنادية، التيلوغوية', 'بنغالورو، الهند · منفتح على فرص العمل في الهند ودول الخليج']],
+    'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند ودول الخليج']],
   ['#quick .q-actions > *', ['تنزيل السيرة الذاتية', 'نسخ البريد', 'واتساب']],
 ];
 const AR = AR_SRC.flatMap(([sel, ar]) => Array.isArray(ar)
@@ -858,9 +741,7 @@ function toggleLang() {
     document.documentElement.lang = isAr ? 'ar' : 'en';
     document.documentElement.dir = isAr ? 'rtl' : 'ltr';
     langBtn.textContent = isAr ? 'EN' : 'ع';
-    document.getElementById('shape-label').textContent = (isAr ? labelsAr : labels)[currentKey];
     cIn.placeholder = isAr ? 'ابحث عن إجراء أو قسم أو شكل…' : 'Search actions, sections, shapes…';
-    measure();
     SA.emit('langchange');
     if (isAr) SA.emit('lang');
   };
@@ -932,13 +813,13 @@ const ACTIONS = [
   { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => SA.shockwave() },
   ...Object.keys(labels).map(k => ({ g: 'Morph particles', i: '◇', l: 'Shape → ' + labels[k].split(' / ')[1].toLowerCase(), k, run: () => setShape(k) })),
 ];
-const ACT_AR = { 'Home': 'الرئيسية', 'About': 'نبذة عني', 'Impact in numbers': 'الإنجازات بالأرقام', 'Experience': 'الخبرات', 'Tech stack': 'المهارات التقنية',
+const ACT_AR = { 'Home': 'الرئيسية', 'About': 'نبذة عني', 'Impact in numbers': 'الإنجازات بالأرقام', 'Experience': 'الخبرات', 'Tech stack': 'المهارات',
   'Education & recognition': 'التعليم والتقدير', 'Contact': 'تواصل', '30-second summary': 'ملخص في 30 ثانية', 'Download résumé (PDF)': 'تنزيل السيرة الذاتية (PDF)',
   'Copy email address': 'نسخ البريد الإلكتروني', 'Copy phone number': 'نسخ رقم الهاتف', 'Message on WhatsApp': 'مراسلة عبر واتساب', 'Open GitHub': 'فتح GitHub',
-  'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Open terminal': 'فتح الطرفية', 'Trigger shockwave': 'إطلاق موجة صادمة' };
+  'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Open terminal': 'فتح الـ Terminal', 'Trigger shockwave': 'إطلاق موجة صادمة' };
 const GRP_AR = { 'Navigate': 'التنقل', 'Recruiter': 'لمسؤولي التوظيف', 'Experience': 'التجربة', 'Morph particles': 'تشكيل الجسيمات', 'Play': 'اللعب' };
 const actLabel = a => document.documentElement.lang !== 'ar' ? a.l
-  : a.g === 'Morph particles' ? 'الشكل ← ' + labelsAr[a.k].split(' / ')[1] : (ACT_AR[a.l] || a.la || a.l);
+  : a.g === 'Morph particles' ? a.l : (ACT_AR[a.l] || a.la || a.l);
 const grpLabel = g => document.documentElement.lang === 'ar' ? (GRP_AR[g] || g) : g;
 let filtered = ACTIONS, sel = 0;
 function renderCmdk() {
@@ -973,10 +854,9 @@ document.getElementById('dock-k').onclick = openCmdk;
 /* ============ Mobile dock active state ============ */
 const dockLinks = [...document.querySelectorAll('.dock a')];
 const dockIO = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting && !tunnelOn) dockLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+  if (e.isIntersecting) dockLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
 }), { threshold: 0.4 });
 sections.forEach(s => dockIO.observe(s));
 
 
 Object.assign(SA, { actions: ACTIONS, toast, copy, openCmdk, closeOverlays });
-SA.panels = panels;

@@ -75,7 +75,7 @@ function renderWx() {
   const c = wxNow, w = WX.find(x => x[0].includes(c.weather_code)) || [[], '🌡️', 'Weather', null, 'الطقس'];
   $('lv-temp').innerHTML = `${Math.round(c.temperature_2m)}°<small>C</small> <span class="wx-ico">${!c.is_day && w[3] ? w[3] : w[1]}</span>`;
   $('lv-wx').textContent = isAr()
-    ? `${w[4]} · الإحساس ${Math.round(c.apparent_temperature)}° · الرطوبة ${c.relative_humidity_2m}%`
+    ? `${w[4]} · الحرارة المحسوسة ${Math.round(c.apparent_temperature)}° · الرطوبة ${c.relative_humidity_2m}%`
     : `${w[2]} · feels ${Math.round(c.apparent_temperature)}° · ${c.relative_humidity_2m}% humidity`;
 }
 (async () => {
@@ -187,27 +187,27 @@ try {
 // about Syed while they play — without a separate "game" screen.
 const BUGS = [
   { host: '#about .glass', hint: 'About', hintAr: 'نبذة عني', fact: 'Siemens Scholar — full scholarship through B.Tech at UVCE, graduating with a 9.09 CGPA.', ar: 'منحة سيمنس — منحة كاملة طوال دراسة البكالوريوس في UVCE، مع تخرّج بمعدل 9.09.' },
-  { host: '#impact .stat:nth-child(1)', hint: 'Impact', hintAr: 'الإنجازات', ar: 'ترحيل AG-Grid من v31 إلى v35: رصد أكثر من 50 تغييرًا جذريًا، وترحيل 58 ملف TypeScript، وتقليص حزمة الجدول بنسبة 42%.', fact: 'AG-Grid v31 → v35: mapped 50+ breaking changes, migrated 58 TypeScript files and cut the grid bundle by 42%.' },
-  { host: '#impact .stat:nth-child(3)', hint: 'Impact', hintAr: 'الإنجازات', ar: 'إصلاح تعطّل المتصفح عند عرض المخططات الخطية لأكثر من 130 ألف نقطة بيانات (حساب القيم المكدّسة).', fact: 'Fixed a browser crash when line charts rendered 130K+ data points (stacked-value computation).' },
-  { host: 'IIS', hint: 'Experience', hintAr: 'الخبرات', ar: 'تتبّع خطأ IIS HTTP 404.11 إلى أحرف مُرمَّزة في الروابط المركّبة — خطأ طال 100% من عملاء Windows.', fact: 'Traced IIS HTTP 404.11 to encoded characters in composite URLs — a bug hitting 100% of Windows-deployed customers.' },
-  { host: 'SonarCloud', hint: 'Experience', hintAr: 'الخبرات', ar: 'خفض أخطاء SonarCloud عالية الخطورة في الواجهة الأمامية إلى الصفر.', fact: 'Drove SonarCloud High-severity frontend bugs down to zero.' },
-  { host: '#skills .skill:nth-child(2)', hint: 'Stack', hintAr: 'المهارات', ar: 'بناء أدوار على مستوى المجلد بمُقيِّم ACL مخصص في Spring Security مع ضمان تفرّد الأسماء عبر الأقفال الاستشارية.', fact: 'Built folder-scoped roles with a custom Spring Security ACL evaluator and advisory-lock name uniqueness.' },
+  { host: '#impact .stat:nth-child(1)', hint: 'Impact', hintAr: 'الإنجازات', ar: 'ترقية AG-Grid من v31 إلى v35: أكثر من 50 breaking change، و58 ملف TypeScript، وتقليص الـ bundle بنسبة 42%.', fact: 'AG-Grid v31 → v35: mapped 50+ breaking changes, migrated 58 TypeScript files and cut the grid bundle by 42%.' },
+  { host: '#impact .stat:nth-child(3)', hint: 'Impact', hintAr: 'الإنجازات', ar: 'أصلح تعطّل المتصفح في line charts تعرض أكثر من 130 ألف نقطة بيانات.', fact: 'Fixed a browser crash when line charts rendered 130K+ data points (stacked-value computation).' },
+  { host: 'IIS', hint: 'Experience', hintAr: 'الخبرات', ar: 'اكتشف سبب خطأ IIS HTTP 404.11 (encoded characters في الـ URLs) — خطأ أثّر على 100% من عملاء Windows.', fact: 'Traced IIS HTTP 404.11 to encoded characters in composite URLs — a bug hitting 100% of Windows-deployed customers.' },
+  { host: 'SonarCloud', hint: 'Experience', hintAr: 'الخبرات', ar: 'خفّض أخطاء SonarCloud عالية الخطورة في الـ frontend إلى الصفر.', fact: 'Drove SonarCloud High-severity frontend bugs down to zero.' },
+  { host: '#skills .skill:nth-child(2)', hint: 'Stack', hintAr: 'المهارات', ar: 'بنى أدوار صلاحيات على مستوى المجلد باستخدام Spring Security ACL.', fact: 'Built folder-scoped roles with a custom Spring Security ACL evaluator and advisory-lock name uniqueness.' },
   { host: '#edu .ring:nth-child(2)', hint: 'Education', hintAr: 'التعليم', ar: 'حصل على 96.16% في الصف الثاني عشر و96.48% في الصف العاشر.', fact: 'Scored 96.16% in Class 12 and 96.48% in Class 10.' },
-  { host: '#live .t-ship', hint: 'Live', hintAr: 'مباشر', ar: 'أكثر من 90 خطأ تم إصلاحه و89 نقلًا للإصلاحات عبر 11 إصدارًا مدعومًا منذ 2023.', fact: '90+ bugs fixed and 89 backports across 11 supported releases since 2023.' },
+  { host: '#live .t-ship', hint: 'Live', hintAr: 'مباشر', ar: 'أكثر من 90 خطأ تم إصلاحه و89 backports عبر 11 إصدارًا مدعومًا منذ 2023.', fact: '90+ bugs fixed and 89 backports across 11 supported releases since 2023.' },
 ];
 const ACH = [
-  { id: 'hello', i: '👋', n: 'First contact', d: 'Scrolled past the hero', an: 'أول تواصل', ad: 'تجاوزت الواجهة الرئيسية', xp: 10 },
+  { id: 'hello', i: '👋', n: 'First contact', d: 'Scrolled past the hero', an: 'أول تواصل', ad: 'بدأت التصفح', xp: 10 },
   { id: 'impact', i: '📈', n: 'Numbers person', d: 'Checked the impact stats', an: 'عاشق الأرقام', ad: 'اطّلعت على إحصاءات الإنجازات', xp: 10 },
   { id: 'work', i: '💼', n: 'Deep diver', d: 'Explored the experience timeline', an: 'غوص عميق', ad: 'استكشفت مسيرة الخبرات', xp: 20 },
-  { id: 'live', i: '📡', n: 'Live wire', d: 'Tuned in live from Bengaluru', an: 'على الهواء', ad: 'تابعت البث المباشر من بنغالورو', xp: 10 },
+  { id: 'live', i: '📡', n: 'Live wire', d: 'Tuned in live from Bengaluru', an: 'على الهواء', ad: 'زرت قسم «مباشر»', xp: 10 },
   { id: 'end', i: '🏁', n: 'Completionist', d: 'Made it all the way to Contact', an: 'حتى النهاية', ad: 'وصلت إلى قسم التواصل', xp: 20 },
   { id: 'burst', i: '💥', n: 'Big bang', d: 'Tapped empty space for a shockwave', an: 'الانفجار العظيم', ad: 'أطلقت موجة صادمة', xp: 15 },
   { id: 'hole', i: '🕳️', n: 'Event horizon', d: 'Held down to create a black hole', an: 'أفق الحدث', ad: 'صنعت ثقبًا أسود', xp: 30 },
-  { id: 'spin', i: '🌀', n: 'Orbital mechanic', d: 'Dragged to spin the constellation', an: 'ميكانيكا المدارات', ad: 'أدرت الكوكبة', xp: 15 },
-  { id: 'card', i: '💳', n: 'Card shark', d: 'Flipped the holographic card', an: 'محترف البطاقات', ad: 'قلبت البطاقة الهولوغرافية', xp: 15 },
+  { id: 'spin', i: '🌀', n: 'Orbital mechanic', d: 'Dragged to spin the constellation', an: 'ميكانيكا المدارات', ad: 'أدرت الجسيمات بالسحب', xp: 15 },
+  { id: 'card', i: '💳', n: 'Card shark', d: 'Flipped the holographic card', an: 'محترف البطاقات', ad: 'قلبت بطاقة التعريف', xp: 15 },
   { id: 'sound', i: '🎵', n: 'Maestro', d: 'Turned on the sound', an: 'المايسترو', ad: 'شغّلت الصوت', xp: 15 },
   { id: 'lang', i: '🌍', n: 'Polyglot', d: 'Switched the site to العربية', an: 'متعدد اللغات', ad: 'حوّلت الموقع إلى العربية', xp: 15 },
-  { id: 'term', i: '⌨️', n: 'Hacker', d: 'Found the secret terminal', an: 'هاكر', ad: 'وجدت الطرفية السرية', xp: 25 },
+  { id: 'term', i: '⌨️', n: 'Hacker', d: 'Found the secret terminal', an: 'هاكر', ad: 'وجدت الـ terminal السري', xp: 25 },
   { id: 'cmdk', i: '⚡', n: 'Power user', d: 'Opened the command menu', an: 'مستخدم محترف', ad: 'فتحت قائمة الأوامر', xp: 15 },
   { id: 'summary', i: '📋', n: 'Recruiter mode', d: 'Read the 30-second summary', an: 'وضع التوظيف', ad: 'قرأت الملخص في 30 ثانية', xp: 15 },
   { id: 'hunter', i: '🏆', n: 'Bug hunter', d: 'Squashed every hidden bug', an: 'صائد الأخطاء', ad: 'سحقت كل الأخطاء المخفية', xp: 100 },
@@ -241,7 +241,7 @@ function unlock(id) {
   const a = ACH.find(x => x.id === id); if (!a) return;
   const before = level(xp());
   prog.a.push(id); save();
-  popCard(isAr() ? `<span class="at-i">${a.i}</span><div><small>إنجاز جديد · +${a.xp} XP</small><b>${a.an}</b></div>` : `<span class="at-i">${a.i}</span><div><small>Achievement unlocked · +${a.xp} XP</small><b>${a.n}</b></div>`);
+  popCard(isAr() ? `<span class="at-i">${a.i}</span><div><small>إنجاز جديد · +${a.xp} XP</small><b>${a.n}</b></div>` : `<span class="at-i">${a.i}</span><div><small>Achievement unlocked · +${a.xp} XP</small><b>${a.n}</b></div>`);
   [0, 4, 7].forEach((k, i) => setTimeout(() => SA.pluck([523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98, 1760, 2093][k] || 1046.5, 0.05), i * 90));
   levelCheck(before); renderHud(true);
 }
@@ -291,7 +291,7 @@ const achp = $('achp');
 function openAch() {
   SA.closeOverlays();
   const ar = isAr();
-  $('achp-list').innerHTML = ACH.map(a => `<li class="${prog.a.includes(a.id) ? 'got' : ''}"><span>${prog.a.includes(a.id) ? a.i : '🔒'}</span><div><b>${ar ? a.an : a.n}</b><small>${ar ? a.ad : a.d}</small></div><em>+${a.xp}</em></li>`).join('');
+  $('achp-list').innerHTML = ACH.map(a => `<li class="${prog.a.includes(a.id) ? 'got' : ''}"><span>${prog.a.includes(a.id) ? a.i : '🔒'}</span><div><b>${a.n}</b><small>${ar ? a.ad : a.d}</small></div><em>+${a.xp}</em></li>`).join('');
   $('achp-bugs').innerHTML = BUGS.map((b, i) => prog.b.includes(i)
     ? `<li class="got"><span>🐞</span><p>${ar ? b.ar : b.fact}</p></li>`
     : `<li><span>❔</span><p>${ar ? `خطأ مختبئ في مكان ما ضمن <b>${b.hintAr}</b>…` : `A bug is hiding somewhere in <b>${b.hint}</b>…`}</p></li>`).join('');
@@ -316,7 +316,7 @@ hint.addEventListener('click', () => hint.classList.remove('show'));
 /* ============ Palette entries ============ */
 SA.actions.push(
   { g: 'Play', i: '🏆', l: 'Achievements & hidden bugs', la: 'الإنجازات والأخطاء المخفية', k: 'game progress xp level', run: openAch },
-  { g: 'Play', i: '💳', l: 'Flip the holographic card', la: 'اقلب البطاقة الهولوغرافية', k: 'business card qr', run: () => { SA.scrollTo($('contact')); setTimeout(flipCard, 800); } },
+  { g: 'Play', i: '💳', l: 'Flip the holographic card', la: 'اقلب بطاقة التعريف', k: 'business card qr', run: () => { SA.scrollTo($('contact')); setTimeout(flipCard, 800); } },
   { g: 'Play', i: '📇', l: 'Save contact to phone (vCard)', la: 'احفظ جهة الاتصال في هاتفك (vCard)', k: 'vcf contact save', run: () => { location.href = 'Syed_Abdulla.vcf'; } },
   { g: 'Play', i: '📡', l: 'Live from Bengaluru', la: 'مباشرة من بنغالورو', k: 'weather time now live', run: () => SA.scrollTo($('live')) },
 );

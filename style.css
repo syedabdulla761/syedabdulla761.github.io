@@ -382,16 +382,6 @@ body{touch-action:pan-y pinch-zoom}
 .achp-reset{margin-top:18px;background:none;border:0;color:var(--muted);font:12px var(--mono);text-decoration:underline;cursor:pointer}
 @media(max-width:560px){.achp-list{grid-template-columns:1fr}}
 
-/* ---- tunnel scroll: fixed panels scrubbed by scroll position ---- */
-.layer{width:100%}
-html.tunnel main > section{position:fixed;inset:0;height:100vh;height:100dvh;min-height:0;padding:0!important;display:none;overflow:hidden;pointer-events:none}
-html.tunnel main > section.on{display:block}
-html.tunnel main > section.cur{pointer-events:auto}
-html.tunnel .layer{min-height:100%;padding:110px clamp(16px,5vw,64px);display:flex;flex-direction:column;justify-content:center;will-change:transform,opacity}
-html.tunnel .hero > .layer{align-items:flex-start;padding-left:clamp(16px,8vw,120px)}
-html.tunnel[dir=rtl] .hero > .layer{padding-left:clamp(16px,5vw,64px);padding-right:clamp(16px,8vw,120px)}
-html.tunnel #contact .layer{padding-bottom:90px}
-@media(max-width:760px){html.tunnel .layer{padding:96px 16px 150px}html.tunnel .hero > .layer{padding-left:16px}}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
 .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
