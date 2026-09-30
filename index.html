@@ -13,6 +13,8 @@
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://syedabdulla761.github.io/og.png" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <meta name="theme-color" content="#06070b" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,7 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@500&family=Noto+Sans+Devanagari:wght@500&family=Noto+Sans+Kannada:wght@500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="style.css" />
 <script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
 </script>
 </head>
 <body>
@@ -35,6 +37,7 @@
     <a href="#about">About</a><a href="#impact">Impact</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#contact">Contact</a>
   </nav>
   <div class="nav-r">
+    <button class="btn-sm icon kbar desk" id="kbar-btn" aria-label="Open command menu" title="Command menu">⌘K</button>
     <button class="btn-sm icon" id="snd" aria-label="Toggle ambient sound" title="Ambient sound">🔇</button>
     <button class="btn-sm icon" id="lang" aria-label="Switch language" title="English / العربية">ع</button>
     <a class="btn-sm magnetic" id="cv" href="Syed_Abdulla_Resume.pdf" download>Résumé ↓</a>
@@ -57,6 +60,7 @@
     <div class="hero-cta">
       <a href="#work" class="btn magnetic">View my work</a>
       <a href="#contact" class="btn ghost magnetic">Let's talk</a>
+      <button class="btn ghost magnetic" id="quick-btn">⚡ 30-sec summary</button>
     </div>
     <div class="hero-meta">
       <span>📍 Bengaluru, India</span><span>🌍 Open to India &amp; GCC roles</span><span>🟢 3+ yrs · insightsoftware</span>
@@ -198,9 +202,49 @@
         <div><span data-tz="Asia/Qatar">--:--</span><small>Doha</small></div>
       </div>
     </div>
-    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · Click empty space for a shockwave · Press <kbd>~</kbd> for a terminal</footer>
+    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · <span class="desk">Click empty space for a shockwave · <kbd>⌘K</kbd> commands · <kbd>~</kbd> terminal</span><span class="touch">Tap empty space for a shockwave · Tilt your phone</span></footer>
   </section>
 </main>
+
+<!-- Mobile dock -->
+<nav class="dock" aria-label="Mobile navigation">
+  <a href="#home"><span>⌂</span>Home</a><a href="#impact"><span>◈</span>Impact</a><a href="#work"><span>▤</span>Work</a><a href="#contact"><span>✉</span>Contact</a><button id="dock-k"><span>⌘</span>Menu</button>
+</nav>
+
+<!-- Command palette -->
+<div id="cmdk" class="overlay" role="dialog" aria-modal="true" aria-label="Command menu" hidden>
+  <div class="cmdk-box">
+    <div class="cmdk-in"><span>⌘</span><input id="cmdk-input" placeholder="Search actions, sections, shapes…" autocomplete="off" spellcheck="false" /><kbd>esc</kbd></div>
+    <ul id="cmdk-list" role="listbox"></ul>
+    <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> select</span></div>
+  </div>
+</div>
+
+<!-- Recruiter quick view -->
+<div id="quick" class="overlay" role="dialog" aria-modal="true" aria-label="30-second summary" hidden>
+  <div class="quick-box">
+    <button class="quick-x" id="quick-x" aria-label="Close">×</button>
+    <div class="eyebrow">⚡ 30-second summary</div>
+    <h3>Syed Abdulla</h3>
+    <p class="q-role">Full-Stack Software Engineer · insightsoftware</p>
+    <dl>
+      <dt>Experience</dt><dd>3+ years (Feb 2023 – present) · Promoted to SE in 2 yrs</dd>
+      <dt>Core stack</dt><dd>React, TypeScript, Java, Spring Boot, PostgreSQL</dd>
+      <dt>Domain</dt><dd>Enterprise BI &amp; data visualisation (Logi Symphony)</dd>
+      <dt>Highlights</dt><dd>−42% grid bundle · Playground used by 100+ enterprise customers · +40% WCAG compliance · 0 sprint spillovers</dd>
+      <dt>Education</dt><dd>B.Tech CSE, UVCE Bengaluru · CGPA 9.09 · Siemens Scholar</dd>
+      <dt>Reviews</dt><dd>“Exceeds Expectations” in 2025 &amp; 2026</dd>
+      <dt>Languages</dt><dd>English, Hindi, Kannada, Telugu</dd>
+      <dt>Location</dt><dd>Bengaluru, India · Open to India &amp; GCC roles</dd>
+    </dl>
+    <div class="q-actions">
+      <a class="btn" href="Syed_Abdulla_Resume.pdf" download>Download résumé</a>
+      <button class="btn ghost" data-copy="syedabdulla761@gmail.com">Copy email</button>
+      <a class="btn ghost" href="https://wa.me/918867618049" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- Terminal easter egg -->
 <div id="term" aria-hidden="true">
@@ -210,5 +254,6 @@
 </div>
 
 <script type="module" src="main.js"></script>
+<script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 </body>
 </html>

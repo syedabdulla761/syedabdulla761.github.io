@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /* ============ Three.js: morphing particle constellation ============ */
 const isMobile = matchMedia('(max-width: 760px)').matches;
@@ -7,12 +11,21 @@ const canvas = document.getElementById('bg');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
-renderer.setClearColor(0x06070b, 1);
+renderer.setClearColor(0x000000, 1);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x06070b, 0.028);
+scene.fog = new THREE.FogExp2(0x000000, 0.028);
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 200);
 camera.position.set(0, 0, 22);
+
+// Cinematic bloom on capable (non-mobile) devices
+let composer = null;
+if (!isMobile) {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12));
+  composer.addPass(new OutputPass());
+}
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -247,18 +260,33 @@ function tick() {
   camera.lookAt(0, 0, 0);
   stars.rotation.y = t * 0.01; stars.rotation.x = scrollY * 0.00005;
 
-  renderer.render(scene, camera);
+  composer ? composer.render() : renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  composer?.setSize(innerWidth, innerHeight);
 });
 addEventListener('pointermove', e => { mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1; });
 addEventListener('pointerleave', () => mouse.set(9, 9));
 // Click anywhere empty → supernova shockwave through the particles
-addEventListener('pointerdown', e => { if (!e.target.closest('a,button,input,.card,.glass,.stat,#term')) burst = 1; });
+addEventListener('pointerdown', e => {
+  mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  if (e.target.closest('a,button,input,.card,.glass,.stat,#term,.overlay,.dock')) return;
+  burst = 1; navigator.vibrate?.(25);
+});
+// Gyroscope parallax on phones (tilt to move the constellation)
+let gyroAsked = false;
+function onTilt(e) { if (e.gamma == null) return; mouse.x = Math.max(-1, Math.min(1, e.gamma / 35)); mouse.y = Math.max(-1, Math.min(1, -(e.beta - 40) / 35)); }
+if (matchMedia('(hover: none)').matches) {
+  addEventListener('deviceorientation', onTilt);
+  addEventListener('touchend', () => { // iOS needs an explicit permission prompt from a gesture
+    if (gyroAsked || typeof window.DeviceOrientationEvent?.requestPermission !== 'function') return;
+    gyroAsked = true; DeviceOrientationEvent.requestPermission().catch(() => {});
+  }, { passive: true });
+}
 
 /* ============ Boot ============ */
 const pctEl = document.getElementById('load-pct');
@@ -289,6 +317,7 @@ const rio = new IntersectionObserver(es => es.forEach(e => {
   const sibs = [...el.parentElement.children].filter(c => c.classList.contains('rv'));
   el.style.transitionDelay = (sibs.indexOf(el) % 6) * 0.08 + 's';
   el.classList.add('in'); rio.unobserve(el);
+  if (el.tagName === 'H2') scramble(el);
   if (el.classList.contains('stat')) countUp(el.querySelector('.num'));
   if (el.classList.contains('ring')) { const c = el.querySelector('.fill'); c.style.strokeDashoffset = 327 * (1 - c.dataset.p / 100); }
 }), { threshold: 0.15 });
@@ -377,8 +406,11 @@ function toggleTerm(open = !term.classList.contains('open')) {
   if (open) { if (!out.innerHTML) print('Welcome to <span class="g">syed-os</span> v1.0 — type <span class="g">help</span>'); setTimeout(() => inp.focus(), 300); }
 }
 addEventListener('keydown', e => {
-  if ((e.key === '`' || e.key === '~') && document.activeElement !== inp) { e.preventDefault(); toggleTerm(); }
-  if (e.key === 'Escape') toggleTerm(false);
+  const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if ((e.key === '`' || e.key === '~') && !typing) { e.preventDefault(); toggleTerm(); }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); cmdk.hidden ? openCmdk() : closeOverlays(); }
+  if (e.key === '/' && !typing) { e.preventDefault(); openCmdk(); }
+  if (e.key === 'Escape') { toggleTerm(false); closeOverlays(); }
 });
 inp.addEventListener('keydown', e => { if (e.key === 'Enter') { run(inp.value); inp.value = ''; } });
 document.getElementById('term-x').onclick = () => toggleTerm(false);
@@ -430,9 +462,116 @@ const AR = [
   ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير الشامل (Full-Stack).'],
 ].map(([sel, ar]) => { const el = document.querySelector(sel); return el && { el, ar, en: el.innerHTML }; }).filter(Boolean);
 let isAr = false;
-document.getElementById('lang').onclick = e => {
-  isAr = !isAr;
-  AR.forEach(({ el, ar, en }) => { el.innerHTML = isAr ? ar : en; el.toggleAttribute('dir', isAr); if (isAr) el.setAttribute('dir', 'rtl'); el.classList.toggle('ar', isAr); });
-  document.documentElement.lang = isAr ? 'ar' : 'en';
-  e.currentTarget.textContent = isAr ? 'EN' : 'ع';
-};
+const langBtn = document.getElementById('lang');
+function toggleLang() {
+  const apply = () => {
+    isAr = !isAr;
+    AR.forEach(({ el, ar, en }) => { el.innerHTML = isAr ? ar : en; if (isAr) el.setAttribute('dir', 'rtl'); else el.removeAttribute('dir'); el.classList.toggle('ar', isAr); });
+    document.documentElement.lang = isAr ? 'ar' : 'en';
+    langBtn.textContent = isAr ? 'EN' : 'ع';
+  };
+  document.startViewTransition ? document.startViewTransition(apply) : apply();
+}
+langBtn.onclick = toggleLang;
+
+/* ============ Text scramble on headline reveal ============ */
+const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/#%&*+=';
+function scramble(el) {
+  if (isAr || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodes = [];
+  while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push([walker.currentNode, walker.currentNode.nodeValue]);
+  const total = nodes.reduce((a, [, t]) => a + t.length, 0), D = 900, t0 = performance.now();
+  (function frame(now) {
+    const k = Math.min((now - t0) / D, 1), shown = Math.floor(k * total);
+    let idx = 0;
+    for (const [n, orig] of nodes) {
+      let str = '';
+      for (const ch of orig) { str += (idx < shown || ch === ' ') ? ch : GLYPHS[Math.random() * GLYPHS.length | 0]; idx++; }
+      n.nodeValue = str;
+    }
+    if (k < 1 && !isAr) requestAnimationFrame(frame); else nodes.forEach(([n, o]) => { n.nodeValue = o; });
+  })(t0);
+}
+
+/* ============ Toast + copy ============ */
+const toastEl = document.getElementById('toast');
+let toastT;
+function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2200); }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('Copied ✓ ' + text); }
+  catch { toast(text); }
+}
+document.querySelectorAll('[data-copy]').forEach(b => { b.onclick = () => copy(b.dataset.copy); });
+
+/* ============ Overlays: quick view + command palette ============ */
+const cmdk = document.getElementById('cmdk'), quick = document.getElementById('quick');
+const cIn = document.getElementById('cmdk-input'), cList = document.getElementById('cmdk-list');
+let lastFocus = null;
+function closeOverlays() {
+  const wasOpen = !cmdk.hidden || !quick.hidden;
+  cmdk.hidden = true; quick.hidden = true;
+  if (wasOpen) lastFocus?.focus?.();
+}
+function openQuick() { closeOverlays(); lastFocus = document.activeElement; quick.hidden = false; document.getElementById('quick-x').focus(); }
+[cmdk, quick].forEach(o => o.addEventListener('pointerdown', e => { if (e.target === o) closeOverlays(); }));
+document.getElementById('quick-x').onclick = closeOverlays;
+document.getElementById('quick-btn').onclick = openQuick;
+
+const go = id => () => document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+const ACTIONS = [
+  { g: 'Navigate', i: '⌂', l: 'Home', run: go('home') },
+  { g: 'Navigate', i: '◎', l: 'About', run: go('about') },
+  { g: 'Navigate', i: '◈', l: 'Impact in numbers', run: go('impact') },
+  { g: 'Navigate', i: '▤', l: 'Experience', k: 'work insightsoftware career', run: go('work') },
+  { g: 'Navigate', i: '⚙', l: 'Tech stack', k: 'skills', run: go('skills') },
+  { g: 'Navigate', i: '🎓', l: 'Education & recognition', k: 'cgpa uvce', run: go('edu') },
+  { g: 'Navigate', i: '✉', l: 'Contact', run: go('contact') },
+  { g: 'Recruiter', i: '⚡', l: '30-second summary', k: 'quick hr recruiter overview', run: openQuick },
+  { g: 'Recruiter', i: '↓', l: 'Download résumé (PDF)', k: 'cv resume', run: () => { location.href = 'Syed_Abdulla_Resume.pdf'; } },
+  { g: 'Recruiter', i: '⧉', l: 'Copy email address', h: 'syedabdulla761@gmail.com', run: () => copy('syedabdulla761@gmail.com') },
+  { g: 'Recruiter', i: '☏', l: 'Copy phone number', h: '+91 88676 18049', run: () => copy('+91 88676 18049') },
+  { g: 'Recruiter', i: '💬', l: 'Message on WhatsApp', run: () => open('https://wa.me/918867618049', '_blank') },
+  { g: 'Recruiter', i: '⌥', l: 'Open GitHub', run: () => open('https://github.com/syedabdulla761', '_blank') },
+  { g: 'Experience', i: '✦', l: 'Toggle العربية / English', k: 'arabic language rtl', run: toggleLang },
+  { g: 'Experience', i: '♪', l: 'Toggle ambient sound', k: 'audio music', run: () => sndBtn.click() },
+  { g: 'Experience', i: '›_', l: 'Open terminal', k: 'console shell', run: () => toggleTerm(true) },
+  { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => { mouse.set(0, 0); burst = 1; } },
+  ...Object.keys(labels).map(k => ({ g: 'Morph particles', i: '◇', l: 'Shape → ' + labels[k].split(' / ')[1].toLowerCase(), k, run: () => setShape(k) })),
+];
+let filtered = ACTIONS, sel = 0;
+function renderCmdk() {
+  const q = cIn.value.trim().toLowerCase();
+  filtered = ACTIONS.filter(a => !q || q.split(/\s+/).every(w => (a.l + ' ' + (a.k || '') + ' ' + a.g).toLowerCase().includes(w)));
+  sel = Math.min(sel, Math.max(filtered.length - 1, 0));
+  let html = '', grp = '';
+  filtered.forEach((a, i) => {
+    if (a.g !== grp) { grp = a.g; html += `<li class="grp">${grp}</li>`; }
+    html += `<li class="it${i === sel ? ' sel' : ''}" role="option" data-i="${i}"><i>${a.i}</i>${a.l}${a.h ? `<small>${a.h}</small>` : ''}</li>`;
+  });
+  cList.innerHTML = html || '<li class="none">No results — try “resume” or “globe”</li>';
+  cList.querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
+}
+function openCmdk() { closeOverlays(); lastFocus = document.activeElement; cmdk.hidden = false; cIn.value = ''; sel = 0; renderCmdk(); cIn.focus(); }
+function runSel(i = sel) { const a = filtered[i]; if (!a) return; closeOverlays(); a.run(); }
+cIn.addEventListener('input', () => { sel = 0; renderCmdk(); });
+cIn.addEventListener('keydown', e => {
+  if (!filtered.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % filtered.length; renderCmdk(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + filtered.length) % filtered.length; renderCmdk(); }
+  if (e.key === 'Enter') { e.preventDefault(); runSel(); }
+});
+cList.addEventListener('click', e => { const li = e.target.closest('.it'); if (li) runSel(+li.dataset.i); });
+cList.addEventListener('pointermove', e => {
+  const li = e.target.closest('.it');
+  if (li && +li.dataset.i !== sel) { sel = +li.dataset.i; cList.querySelectorAll('.it').forEach(x => x.classList.toggle('sel', +x.dataset.i === sel)); }
+});
+document.getElementById('kbar-btn').onclick = openCmdk;
+document.getElementById('dock-k').onclick = openCmdk;
+
+/* ============ Mobile dock active state ============ */
+const dockLinks = [...document.querySelectorAll('.dock a')];
+const dockIO = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) dockLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+}), { threshold: 0.4 });
+sections.forEach(s => dockIO.observe(s));
+
