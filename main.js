@@ -246,7 +246,6 @@ const userRot = new THREE.Vector2(), userVel = new THREE.Vector2();
 function setShape(key) {
   if (!shapes[key]) return;
   currentKey = key; target = shapes[key]; morphT = 0;
-  document.getElementById('shape-label').textContent = labels[key];
   chime(Object.keys(labels).indexOf(key));
 }
 
@@ -330,7 +329,7 @@ addEventListener('resize', () => {
 });
 
 /* ---- Gestures: tap = shockwave · hold = black hole · drag/swipe = orbit ---- */
-const UI = 'a,button,input,.card,.glass,.stat,#term,.overlay,.dock,.holo-wrap,.tile,.gesture-hint';
+const UI = 'a,button,input,.card,.glass,.stat,.overlay,.dock,.holo-wrap,.tile,.gesture-hint';
 const toNdc = (e, v) => v.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
 let aimT;
 addEventListener('pointermove', e => {
@@ -526,44 +525,13 @@ const updClocks = () => clocks.forEach(c => c.textContent = new Date().toLocaleT
 updClocks(); setInterval(updClocks, 15000);
 document.getElementById('yr').textContent = new Date().getFullYear();
 
-/* ============ Terminal easter egg ============ */
-const term = document.getElementById('term'), out = document.getElementById('term-out'), inp = document.getElementById('term-input');
-const print = (html) => { out.innerHTML += html + '\n'; out.scrollTop = out.scrollHeight; };
-const cmds = {
-  help: () => '<span class="g">whoami</span>  <span class="g">skills</span>  <span class="g">impact</span>  <span class="g">edu</span>  <span class="g">contact</span>  <span class="g">resume</span>  <span class="g">shape &lt;text|star|wave|grid|knot|helix|globe&gt;</span>  <span class="g">clear</span>  <span class="g">exit</span>',
-  whoami: () => 'Syed Abdulla — Full-Stack Software Engineer @ insightsoftware (Logi Symphony BI).\n3+ yrs · React · TypeScript · Java · Spring Boot · Bengaluru, India.',
-  skills: () => '<span class="t">frontend</span> React, TypeScript, AG-Grid Enterprise, Blueprint.js, WCAG\n<span class="t">backend </span> Java, Spring Boot, Spring Security ACL, JPA, Liquibase, PostgreSQL\n<span class="t">infra   </span> Docker, Kubernetes, GitHub Actions, Jenkins, SonarCloud',
-  impact: () => '−42% grid bundle · public Playground (playground.simba.com) · 130K-point charts\n305 Jira tickets · 95 bugs · 4 spikes · 89 backports · +40% WCAG · 0 spillovers',
-  edu: () => 'B.Tech CSE, UVCE Bengaluru (2019–23) · CGPA 9.09 · Siemens Scholar',
-  contact: () => 'email    syedabdulla761@gmail.com\nphone    +91 88676 18049\nlinkedin linkedin.com/in/syed-abdulla-6467311b6\ngithub   github.com/syedabdulla761',
-  resume: () => { location.href = 'Syed_Abdulla_Resume.pdf'; return 'Downloading résumé…'; },
-  clear: () => { out.innerHTML = ''; return null; },
-  exit: () => { toggleTerm(false); return null; },
-  sudo: () => 'Nice try. 😄 But you can hire me instead → type <span class="g">contact</span>',
-};
-function run(line) {
-  const [c, ...a] = line.trim().split(/\s+/);
-  print(`<span class="g">❯</span> ${line.replace(/</g, '&lt;')}`);
-  if (!c) return;
-  if (c === 'shape') { if (shapes[a[0]]) { setShape(a[0]); return print('morphing → ' + a[0]); } return print('unknown shape'); }
-  const f = cmds[c.toLowerCase()];
-  const r = f ? f() : `command not found: ${c.replace(/</g, '&lt;')} — try <span class="g">help</span>`;
-  if (r) print(r);
-}
-function toggleTerm(open = !term.classList.contains('open')) {
-  term.classList.toggle('open', open);
-  term.setAttribute('aria-hidden', !open);
-  if (open) { SA.emit('term'); if (!out.innerHTML) print('Welcome to <span class="g">syed-os</span> v1.0 — type <span class="g">help</span>'); setTimeout(() => inp.focus(), 300); }
-}
+/* ============ Keyboard shortcuts ============ */
 addEventListener('keydown', e => {
   const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
-  if ((e.key === '`' || e.key === '~') && !typing) { e.preventDefault(); toggleTerm(); }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); cmdk.hidden ? openCmdk() : closeOverlays(); }
   if (e.key === '/' && !typing) { e.preventDefault(); openCmdk(); }
-  if (e.key === 'Escape') { toggleTerm(false); closeOverlays(); }
+  if (e.key === 'Escape') closeOverlays();
 });
-inp.addEventListener('keydown', e => { if (e.key === 'Enter') { run(inp.value); inp.value = ''; } });
-document.getElementById('term-x').onclick = () => toggleTerm(false);
 
 /* ============ Interactive sound (WebAudio, off by default) ============ */
 // A drone in a reverb "space". The cursor / finger strums a pentatonic harp across the screen,
@@ -715,12 +683,12 @@ const AR_SRC = [
   ['#playground .case-copy > .btn', 'استكشفها مباشرة ↗'],
   // experience
   ['#work .eyebrow', '03 — الخبرات'],
-  ['#work h2', 'insightsoftware <span class="muted">· Logi Symphony</span>'],
+  ['#work h2', 'insightsoftware <span class="muted">· Simba</span>'],
   ['#work .sub', 'فبراير 2023 – الآن · بنغالورو · <a href="https://playground.simba.com/" target="_blank" rel="noopener">playground.simba.com ↗</a>'],
   ['#work .tl-head span', ['سبتمبر 2025 – الآن', 'يوليو 2023 – أغسطس 2025', 'فبراير 2023 – يونيو 2023']],
   ['#work .card h4', [
     'ترقية AG-Grid من v31 إلى v35', 'تنظيم المجلدات — Backend', 'تنظيم المجلدات — واجهة المستخدم',
-    'Self-Service Report Embedding', 'توحيد Symphony والصفحة الرئيسية', 'Playground AI والعروض التوضيحية',
+    'Self-Service Report Embedding', 'توحيد المنصة والصفحة الرئيسية', 'Playground AI والعروض التوضيحية',
     'إمكانية الوصول (WCAG)', 'إصلاح حرج لخطأ IIS 404.11', 'Source V2 والفلاتر',
     'تطبيق Playground — من الصفر', 'فوز في الهاكاثون — «Composer»', 'SonarCloud و charts بـ 130 ألف نقطة',
     'Logging: من Raize إلى Serilog']],
@@ -752,12 +720,11 @@ const AR_SRC = [
   // live
   ['#live .eyebrow', '<span class="live-dot"></span>06 — الآن'],
   ['#live h2', 'مباشرة من <span class="gold">بنغالورو</span>.'],
-  ['#live .sub', 'كل ما هنا يتحدّث لحظيًا — الوقت عندي، والطقس في بنغالورو، والساعات المشتركة بين توقيتك وتوقيتي، وأداء هذه الصفحة على جهازك.'],
+  ['#live .sub', 'كل ما هنا يتحدّث لحظيًا — الوقت عندي، والطقس في بنغالورو، والساعات المشتركة بين توقيتك وتوقيتي.'],
   ['#live .t-clock small', 'بنغالورو · توقيت الهند'], ['#live .i-you', 'توقيتك'], ['#live .t-weather small', 'الطقس في بنغالورو'],
   ['#live .t-ship small', 'أعمل في برمجيات المؤسسات منذ'], ['#live .i-since', 'منذ فبراير 2023 · والعدّاد مستمر'],
-  ['#live .t-nerd small', 'Stats for nerds · هذه الصفحة على جهازك'], ['#live .nerd span', ['FPS', 'Particles', 'وقت التحميل', 'GPU']],
-  ['#live .t-deploy small', 'آخر تحديث للموقع'], ['#ach-tile small', 'استكشافك'],
-  ['#ach-tile .muted-s', '🐞 <b id="at-bugs">0</b>/8 أخطاء مخفية · 🏆 <b id="at-ach">0</b>/15 إنجازًا — كل خطأ يخفي قصة من مسيرتي.'],
+  ['#ach-tile small', 'استكشافك'],
+  ['#ach-tile .muted-s', '🐞 <b id="at-bugs">0</b>/8 أخطاء مخفية · 🏆 <b id="at-ach">0</b>/14 إنجازًا — كل خطأ يخفي قصة من مسيرتي.'],
   ['#ach-tile .play', 'عرض ◀'],
   // contact
   ['#contact .eyebrow', '07 — تواصل'],
@@ -766,7 +733,7 @@ const AR_SRC = [
   ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
   ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
   ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
-  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">الكود المصدري ↗</a> · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للـ terminal</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
+  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">الكود المصدري ↗</a> · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
   // chrome
   ['.dock a', ['<span>⌂</span>الرئيسية', '<span>◉</span>مباشر', '<span>▤</span>الخبرات', '<span>✉</span>تواصل']], ['#dock-k', '<span>⌘</span>القائمة'],
   ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة</span>'],
@@ -775,7 +742,7 @@ const AR_SRC = [
   ['#quick dt', ['الخبرة', 'التقنيات', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع']],
   ['#quick dd', [
     'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
-    'Enterprise BI و Data Visualization (Logi Symphony)',
+    'Enterprise BI و embedded analytics — Simba (سابقًا Logi Symphony)',
     'بنيت منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
     'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند والشرق الأوسط (الخليج)']],
@@ -865,14 +832,13 @@ const ACTIONS = [
   { g: 'Experience', i: '{}', l: 'View this site\'s source', k: 'repo code github', run: () => open('https://github.com/syedabdulla761/syedabdulla761.github.io', '_blank') },
   { g: 'Experience', i: '✦', l: 'Toggle العربية / English', k: 'arabic language rtl', run: toggleLang },
   { g: 'Experience', i: '♪', l: 'Toggle ambient sound', k: 'audio music', run: () => sndBtn.click() },
-  { g: 'Experience', i: '›_', l: 'Open terminal', k: 'console shell', run: () => toggleTerm(true) },
   { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => SA.shockwave() },
   ...Object.keys(labels).map(k => ({ g: 'Morph particles', i: '◇', l: 'Shape → ' + labels[k].split(' / ')[1].toLowerCase(), k, run: () => setShape(k) })),
 ];
 const ACT_AR = { 'Home': 'الرئيسية', 'About': 'نبذة عني', 'Impact in numbers': 'الإنجازات بالأرقام', 'Experience': 'الخبرات', 'Tech stack': 'المهارات',
   'Education & recognition': 'التعليم والتقدير', 'Contact': 'تواصل', '30-second summary': 'ملخص في 30 ثانية', 'Download résumé (PDF)': 'تنزيل السيرة الذاتية (PDF)',
   'Copy email address': 'نسخ البريد الإلكتروني', 'Copy phone number': 'نسخ رقم الهاتف', 'Message on WhatsApp': 'مراسلة عبر واتساب', 'Open GitHub': 'فتح GitHub', 'Open LinkedIn': 'فتح LinkedIn', 'Open the live Playground': 'فتح Playground مباشرة', 'Featured work: Playground': 'عمل مميز: Playground', "View this site's source": 'الكود المصدري لهذا الموقع',
-  'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Open terminal': 'فتح الـ Terminal', 'Trigger shockwave': 'إطلاق موجة صادمة' };
+  'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Trigger shockwave': 'إطلاق موجة صادمة' };
 const GRP_AR = { 'Navigate': 'التنقل', 'Recruiter': 'لمسؤولي التوظيف', 'Experience': 'التجربة', 'Morph particles': 'تشكيل الجسيمات', 'Play': 'اللعب' };
 const actLabel = a => document.documentElement.lang !== 'ar' ? a.l
   : a.g === 'Morph particles' ? a.l : (ACT_AR[a.l] || a.la || a.l);

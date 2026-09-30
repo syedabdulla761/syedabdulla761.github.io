@@ -5,8 +5,6 @@ const $ = id => document.getElementById(id);
 const IST = 'Asia/Kolkata';
 const isTouch = matchMedia('(hover: none)').matches;
 const isAr = () => document.documentElement.lang === 'ar';
-// Arabic counted nouns: 1, 2 (dual), 3–10 (plural), 11+ (singular accusative)
-const arCount = (n, [one, two, few, many]) => n === 1 ? one : n === 2 ? two : n <= 10 ? `${n} ${few}` : `${n} ${many}`;
 
 /* ============ Timezone helpers ============ */
 function tzOffsetMin(tz, d = new Date()) {
@@ -86,51 +84,6 @@ function renderWx() {
   } catch { wxFailed = true; renderWx(); }
 })();
 
-/* ============ Live: last deploy from GitHub ============ */
-const AR_UNITS = { year: ['منذ سنة', 'منذ سنتين', 'سنوات', 'سنة'], month: ['منذ شهر', 'منذ شهرين', 'أشهر', 'شهرًا'], day: ['منذ يوم', 'منذ يومين', 'أيام', 'يومًا'], hour: ['منذ ساعة', 'منذ ساعتين', 'ساعات', 'ساعة'], minute: ['منذ دقيقة', 'منذ دقيقتين', 'دقائق', 'دقيقة'] };
-const agoAr = d => { const s = (Date.now() - d) / 1000; for (const [u, n] of [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]]) if (s >= n) { const v = Math.floor(s / n), f = AR_UNITS[u]; return v <= 2 ? arCount(v, f) : 'منذ ' + arCount(v, f); } return 'الآن'; };
-let commit = null;
-function renderDep() {
-  if (!commit) { $('lv-dep').textContent = isAr() ? 'مؤخرًا' : 'Recently'; return; }
-  $('lv-dep').textContent = isAr() ? agoAr(new Date(commit.date)) : ago(new Date(commit.date));
-  $('lv-msg').innerHTML = `<a href="${commit.url}" target="_blank" rel="noopener">${commit.sha}</a> ${commit.msg.replace(/</g, '&lt;')}`;
-}
-const ago = d => { const s = (Date.now() - d) / 1000; for (const [u, n] of [['year', 31536000], ['month', 2592000], ['day', 86400], ['hour', 3600], ['minute', 60]]) if (s >= n) { const v = Math.floor(s / n); return `${v} ${u}${v > 1 ? 's' : ''} ago`; } return 'just now'; };
-(async () => {
-  try {
-    let c; try { c = JSON.parse(sessionStorage.getItem('sa-commit')); } catch {}
-    if (!c) {
-      const r = await fetch('https://api.github.com/repos/syedabdulla761/syedabdulla761.github.io/commits?per_page=1');
-      const j = (await r.json())[0];
-      c = { date: j.commit.author.date, msg: j.commit.message.split('\n')[0], sha: j.sha.slice(0, 7), url: j.html_url };
-      try { sessionStorage.setItem('sa-commit', JSON.stringify(c)); } catch {}
-    }
-    commit = c; renderDep();
-  } catch { renderDep(); $('lv-msg').textContent = 'GitHub API unavailable'; }
-})();
-
-/* ============ Live: stats for nerds ============ */
-$('lv-pts').textContent = SA.N.toLocaleString('en-IN');
-try {
-  const gl = SA.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
-  let gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
-  const m = /ANGLE \(([^,]+),\s*([^,]+)/.exec(gpu); if (m) gpu = m[2].replace(/\((R|TM)\)/gi, '').replace(/\s+(Direct3D|vs_|ps_|OpenGL).*$/i, '').replace(/\s*\(0x[0-9a-f]+\)/i, '').trim();
-  $('lv-gpu').textContent = gpu.length > 24 ? gpu.slice(0, 23) + '…' : gpu; $('lv-gpu').title = gpu;
-} catch { $('lv-gpu').textContent = 'WebGL'; }
-const showLoad = () => { const n = performance.getEntriesByType('navigation')[0]; const ms = n ? (n.loadEventEnd || n.domContentLoadedEventEnd) : performance.now(); $('lv-load').textContent = ms > 1000 ? (ms / 1000).toFixed(2) + 's' : Math.round(ms) + 'ms'; };
-document.readyState === 'complete' ? setTimeout(showLoad, 0) : addEventListener('load', () => setTimeout(showLoad, 0));
-const spark = $('lv-spark'), sctx = spark.getContext('2d'), hist = [];
-function drawSpark() {
-  hist.push(SA.fps); if (hist.length > 60) hist.shift();
-  $('lv-fps').textContent = SA.fps;
-  const w = spark.width = spark.clientWidth * devicePixelRatio, h = spark.height = 40 * devicePixelRatio;
-  sctx.clearRect(0, 0, w, h);
-  const g = sctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#2dd4bf'); g.addColorStop(1, '#e8b04b');
-  sctx.strokeStyle = g; sctx.lineWidth = 2 * devicePixelRatio; sctx.beginPath();
-  hist.forEach((v, i) => { const x = i / 59 * w, y = h - Math.min(v, 120) / 120 * (h - 4) - 2; i ? sctx.lineTo(x, y) : sctx.moveTo(x, y); });
-  sctx.stroke();
-}
-setInterval(drawSpark, 500);
 
 /* ============ Holographic business card — drag / swipe to spin, tap to flip ============ */
 const stage = document.querySelector('.holo-stage'), holo = $('holo');
@@ -207,7 +160,6 @@ const ACH = [
   { id: 'card', i: '💳', n: 'Card shark', d: 'Flipped the holographic card', an: 'محترف البطاقات', ad: 'قلبت بطاقة التعريف', xp: 15 },
   { id: 'sound', i: '🎵', n: 'Maestro', d: 'Turned on the sound', an: 'المايسترو', ad: 'شغّلت الصوت', xp: 15 },
   { id: 'lang', i: '🌍', n: 'Polyglot', d: 'Switched the site to العربية', an: 'متعدد اللغات', ad: 'حوّلت الموقع إلى العربية', xp: 15 },
-  { id: 'term', i: '⌨️', n: 'Hacker', d: 'Found the secret terminal', an: 'هاكر', ad: 'وجدت الـ terminal السري', xp: 25 },
   { id: 'cmdk', i: '⚡', n: 'Power user', d: 'Opened the command menu', an: 'مستخدم محترف', ad: 'فتحت قائمة الأوامر', xp: 15 },
   { id: 'summary', i: '📋', n: 'Recruiter mode', d: 'Read the 30-second summary', an: 'وضع التوظيف', ad: 'قرأت الملخص في 30 ثانية', xp: 15 },
   { id: 'hunter', i: '🏆', n: 'Bug hunter', d: 'Squashed every hidden bug', an: 'صائد الأخطاء', ad: 'سحقت كل الأخطاء المخفية', xp: 100 },
@@ -249,7 +201,7 @@ function levelCheck(before) {
   const now = level(xp());
   if (now > before) setTimeout(() => popCard(isAr() ? `<span class="at-i">⭐</span><div><small>ترقية مستوى</small><b>وصلت إلى المستوى ${now}</b></div>` : `<span class="at-i">⭐</span><div><small>Level up</small><b>You reached level ${now}</b></div>`, 'lvl'), 600);
 }
-['burst', 'hole', 'spin', 'card', 'sound', 'lang', 'term', 'cmdk', 'summary'].forEach(ev => SA.on(ev, () => unlock(ev)));
+['burst', 'hole', 'spin', 'card', 'sound', 'lang', 'cmdk', 'summary'].forEach(ev => SA.on(ev, () => unlock(ev)));
 const secAch = { about: 'hello', impact: 'impact', work: 'work', live: 'live', contact: 'end' };
 const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { unlock(secAch[e.target.id]); sio.unobserve(e.target); } }), { threshold: 0.35 });
 Object.keys(secAch).forEach(id => sio.observe($(id)));
@@ -321,7 +273,7 @@ SA.actions.push(
   { g: 'Play', i: '📡', l: 'Live from Bengaluru', la: 'مباشرة من بنغالورو', k: 'weather time now live', run: () => SA.scrollTo($('live')) },
 );
 
-SA.on('langchange', () => { $('lv-tz').textContent = cityOf(visitorTz); tickLive(); renderWx(); renderDep(); renderHud(false); });
+SA.on('langchange', () => { $('lv-tz').textContent = cityOf(visitorTz); tickLive(); renderWx(); renderHud(false); });
 
 /* ============ Featured work: Playground screen carousel ============ */
 {

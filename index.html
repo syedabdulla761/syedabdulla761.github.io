@@ -48,7 +48,6 @@
 </header>
 
 <div class="progress"><span id="progress-bar"></span></div>
-<div class="shape-label" id="shape-label">01 / CONSTELLATION</div>
 
 <main>
   <!-- HERO -->
@@ -148,7 +147,7 @@
   <section id="work" data-shape="grid">
     <div class="wrap">
       <div class="eyebrow">03 — Experience</div>
-      <h2>insightsoftware <span class="muted">· Logi Symphony BI</span></h2>
+      <h2>insightsoftware <span class="muted">· Simba</span></h2>
       <p class="sub">Feb 2023 – Present · Bengaluru · <a href="https://playground.simba.com/" target="_blank" rel="noopener">playground.simba.com ↗</a></p>
 
       <div class="timeline">
@@ -160,7 +159,7 @@
             <article class="card tilt"><div class="chip">Backend · Security</div><h4>Folder Organisation — Spring Boot</h4><p>JPA entities, REST APIs and 3 folder-scoped roles via a custom Spring Security ACL evaluator. Per-user private folders (~4K LOC): event-driven provisioning, Liquibase backfill, atomic sharing-driven moves.</p><div class="kpi">~4K LOC</div></article>
             <article class="card tilt"><div class="chip">React · UX</div><h4>Folder Experience — UI</h4><p>Library tree sidebar with breadcrumbs, folder CRUD dialogs with system-folder badges, folder-first navigation and privilege roles.</p><div class="kpi">End-to-end</div></article>
             <article class="card tilt"><div class="chip">SDK · Embedding</div><h4>Self-Service Report Embedding</h4><p>Single-handedly delivered SSR embedding from spike to docs handover — Embed Manager, SDK events and embed snippets.</p><div class="kpi">Solo delivery</div></article>
-            <article class="card tilt"><div class="chip">Product</div><h4>Symphony Unification &amp; Homepage</h4><p>Spearheaded a task-focused homepage with theming, consolidating 5+ admin workflows into one unified experience.</p><div class="kpi">5+ → 1</div></article>
+            <article class="card tilt"><div class="chip">Product</div><h4>Platform Unification &amp; Homepage</h4><p>Spearheaded a task-focused homepage with theming, consolidating 5+ admin workflows into one unified experience.</p><div class="kpi">5+ → 1</div></article>
             <article class="card tilt"><div class="chip">AI</div><h4>Playground AI &amp; Showcases</h4><p>Integrated the AI chatbot (visual generation, data Q&amp;A, Bot API), pixel-perfect, Crystal Reports &amp; white-labelling showcases; per-branch preview deploys via GitHub Actions.</p><div class="kpi">AI chatbot</div></article>
             <article class="card tilt"><div class="chip">Accessibility</div><h4>WCAG Compliance</h4><p>Cleared a full quarter of a11y debt — aria-hidden/tabindex conflicts, screen-reader patterns with Blueprint.js across dashboards, source editor &amp; menus.</p><div class="kpi">+40% compliance</div></article>
             <article class="card tilt"><div class="chip">Reliability</div><h4>Critical IIS 404.11 Fix</h4><p>Diagnosed encoded characters in composite URLs breaking Windows deployments — a fix impacting 100% of Windows-deployed customers.</p><div class="kpi">100% of Win users</div></article>
@@ -227,17 +226,13 @@
     <div class="wrap">
       <div class="eyebrow"><span class="live-dot"></span>06 — Right now</div>
       <h2>Live from <span class="gold">Bengaluru</span>.</h2>
-      <p class="sub">Everything here updates in real time — my local time, the weather outside my window, how your timezone overlaps with mine, and how this very page is performing on your device.</p>
+      <p class="sub">Everything here updates in real time — my local time, the weather outside my window, and how your timezone overlaps with mine.</p>
       <div class="tiles">
         <div class="tile t-clock"><small>Bengaluru · IST</small><div class="big mono" id="lv-time">--:--:--</div><div class="status" id="lv-status"></div></div>
         <div class="tile t-you"><small><span class="i-you">Your time</span> · <span id="lv-tz"></span></small><div class="big mono" id="lv-you">--:--</div><div class="muted-s" id="lv-overlap"></div><div class="bar"><span id="lv-bar"></span></div></div>
         <div class="tile t-weather"><small>Weather in Bengaluru</small><div class="big" id="lv-temp">--°</div><div class="muted-s" id="lv-wx">Fetching live conditions…</div></div>
         <div class="tile t-ship"><small>Building enterprise software for</small><div class="big mono" id="lv-ship">—</div><div class="muted-s"><span id="lv-days"></span> <span class="i-since">since Feb 2023 · still counting</span></div></div>
-        <div class="tile t-nerd"><small>Stats for nerds · this page, on your device</small>
-          <ul class="nerd"><li><b id="lv-fps">--</b><span>FPS</span></li><li><b id="lv-pts">--</b><span>particles</span></li><li><b id="lv-load">--</b><span>load time</span></li><li><b id="lv-gpu">--</b><span>GPU</span></li></ul>
-          <canvas id="lv-spark"></canvas></div>
-        <div class="tile t-deploy"><small>Site last deployed</small><div class="big" id="lv-dep">—</div><div class="muted-s mono" id="lv-msg"></div></div>
-        <button class="tile t-game" id="ach-tile"><small>Your exploration</small><div class="big"><span id="at-lv">Lv 1</span> · <span id="at-xp">0</span> XP</div><div class="muted-s">🐞 <b id="at-bugs">0</b>/8 hidden bugs squashed · 🏆 <b id="at-ach">0</b>/15 achievements — every bug hides a story from my career.</div><div class="bar"><span id="at-bar"></span></div><span class="play">View ▶</span></button>
+        <button class="tile t-game" id="ach-tile"><small>Your exploration</small><div class="big"><span id="at-lv">Lv 1</span> · <span id="at-xp">0</span> XP</div><div class="muted-s">🐞 <b id="at-bugs">0</b>/8 hidden bugs squashed · 🏆 <b id="at-ach">0</b>/14 achievements — every bug hides a story from my career.</div><div class="bar"><span id="at-bar"></span></div><span class="play">View ▶</span></button>
       </div>
     </div>
   </section>
@@ -283,7 +278,7 @@
         <div><span data-tz="Asia/Qatar">--:--</span><small>Doha</small></div>
       </div>
     </div>
-    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">Source ↗</a> · <span class="desk">Click empty space for a shockwave · <kbd>⌘K</kbd> commands · <kbd>~</kbd> terminal</span><span class="touch">Tap empty space for a shockwave · Tilt your phone</span></footer>
+    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">Source ↗</a> · <span class="desk">Click empty space for a shockwave · <kbd>⌘K</kbd> commands</span><span class="touch">Tap empty space for a shockwave · Tilt your phone</span></footer>
   </section>
 </main>
 
@@ -311,7 +306,7 @@
     <dl>
       <dt>Experience</dt><dd>3+ years (Feb 2023 – present) · Promoted to SE in 2 yrs</dd>
       <dt>Core stack</dt><dd>React, TypeScript, Java, Spring Boot, PostgreSQL</dd>
-      <dt>Domain</dt><dd>Enterprise BI &amp; data visualisation (Logi Symphony)</dd>
+      <dt>Domain</dt><dd>Enterprise BI &amp; embedded analytics — Simba (formerly Logi Symphony)</dd>
       <dt>Highlights</dt><dd>Built the public Playground (playground.simba.com) · −42% grid bundle · 305 Jira tickets (95 bugs, 4 spikes) · +40% WCAG · 0 sprint spillovers</dd>
       <dt>Education</dt><dd>B.Tech CSE, UVCE Bengaluru · CGPA 9.09 · Siemens Scholar</dd>
       <dt>Reviews</dt><dd>“Exceeds Expectations” in 2025 &amp; 2026</dd>
@@ -346,12 +341,6 @@
 
 <div class="gesture-hint" id="ghint"><span class="desk">✦ <b>Drag</b> to spin · <b>Hold</b> for a black hole · <b>Click</b> for a shockwave · 🔇 turn on <b>sound</b> to play</span><span class="touch">✦ <b>Swipe</b> sideways to spin · <b>Hold</b> for a black hole · <b>Tap</b> for a shockwave</span></div>
 
-<!-- Terminal easter egg -->
-<div id="term" data-lenis-prevent aria-hidden="true">
-  <div class="term-bar"><i></i><i></i><i></i><span>syed@portfolio: ~</span><button id="term-x" aria-label="Close">×</button></div>
-  <div id="term-out"></div>
-  <div class="term-in"><span>❯</span><input id="term-input" autocomplete="off" spellcheck="false" placeholder="type 'help'" /></div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
