@@ -7,6 +7,9 @@ ORG:insightsoftware
 TEL;TYPE=CELL:+918867618049
 EMAIL;TYPE=INTERNET:syedabdulla761@gmail.com
 URL:https://syedabdulla761.github.io/
+X-SOCIALPROFILE;TYPE=linkedin:https://www.linkedin.com/in/syed-abdulla-6467311b6/
+item1.URL:https://www.linkedin.com/in/syed-abdulla-6467311b6/
+item1.X-ABLabel:LinkedIn
 ADR;TYPE=WORK:;;;Bengaluru;Karnataka;;India
-NOTE:React · TypeScript · Java · Spring Boot
+NOTE:Full-Stack Software Engineer · React · TypeScript · Java · Spring Boot
 END:VCARD

@@ -417,3 +417,44 @@ html[lang=ar] .tile small,html[lang=ar] .chip{font-size:12px}
 [dir=rtl] .achp-list em,[dir=rtl] #cmdk-list li.it small{margin-left:0;margin-right:auto}
 @media(max-width:560px){[dir=rtl] .t-game .play{left:auto}}
 [dir=rtl] #ach-tile .big,[dir=rtl] #lv-ship{direction:ltr;text-align:right}
+
+/* ---- cursor: spinning Khatam star with context label + comet trail ---- */
+#cursor{width:40px;height:40px;border:0;border-radius:0;mix-blend-mode:normal;color:var(--gold);display:grid;place-items:center;transition:width .3s,height .3s,color .3s}
+#cursor svg{width:100%;height:100%;animation:curSpin 9s linear infinite;filter:drop-shadow(0 0 6px rgba(232,176,75,.55));transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes curSpin{to{rotate:360deg}}
+#cursor.hover{width:64px;height:64px;background:none}
+#cursor.hover svg{animation-duration:3s}
+#cursor.hover svg g{fill:rgba(232,176,75,.12)}
+#cursor.down svg{transform:scale(.72)}
+#cursor.hole{width:84px;height:84px;color:var(--teal)}
+#cursor.hole svg{animation-duration:.6s;filter:drop-shadow(0 0 14px rgba(45,212,191,.9))}
+#cursor.text{width:18px;height:18px;opacity:.5}
+#cursor-label{position:absolute;top:100%;left:50%;transform:translate(-50%,4px);font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);white-space:nowrap;opacity:0;transition:opacity .2s}
+#cursor.labeled #cursor-label{opacity:1}
+#cursor-dot{width:4px;height:4px;box-shadow:0 0 8px var(--gold)}
+#cursor-trail{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:98}
+@media (hover:none){#cursor-trail{display:none}}
+
+/* ---- featured work: Playground case study ---- */
+.case{display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(20px,3vw,40px);align-items:center;margin-top:28px}
+@media(max-width:980px){.case{grid-template-columns:1fr}}
+.browser{border-radius:14px;overflow:hidden;background:#0c0d12;border:1px solid var(--line);box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 60px -20px rgba(232,176,75,.35)}
+.browser-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#15161d;border-bottom:1px solid rgba(255,255,255,.06)}
+.browser-bar i{width:10px;height:10px;border-radius:50%;background:#ff5f56}.browser-bar i:nth-child(2){background:#ffbd2e}.browser-bar i:nth-child(3){background:#27c93f}
+.browser-bar .url{flex:1;margin:0 10px;padding:5px 12px;border-radius:8px;background:rgba(255,255,255,.05);font:12px var(--mono);color:var(--muted);direction:ltr;text-align:left}
+.browser-bar a{font:600 12px var(--body);color:var(--gold)}
+.shots{position:relative;aspect-ratio:16/10;background:#f3f4f7}
+.shots img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top left;opacity:0;transition:opacity .7s ease}
+.shots img.on{opacity:1}
+.case-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.case-tabs button{font:500 12.5px var(--body);color:var(--muted);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:7px 13px;border-radius:99px;cursor:pointer;transition:.25s}
+.case-tabs button:hover{color:var(--fg)}
+.case-tabs button.on{color:#111;background:var(--gold);border-color:var(--gold)}
+.case-lead{font-size:clamp(15px,1.25vw,17px);color:#dcd7cc!important}
+.case-points{list-style:none;margin:6px 0 18px;display:flex;flex-direction:column;gap:9px}
+.case-points li{position:relative;padding-inline-start:20px;font-size:14px;color:#bdb8ae}
+.case-points li::before{content:"✦";position:absolute;inset-inline-start:0;color:var(--gold);font-size:11px;top:3px}
+.case-points b{color:var(--fg)}
+.case-stack{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.case-stack i{font-style:normal;font:500 12px var(--mono);color:var(--teal);padding:4px 10px;border:1px solid rgba(45,212,191,.3);border-radius:99px}
+footer a{color:var(--gold)}

@@ -455,12 +455,57 @@ const phrasesAr = ['واجهات ذكاء أعمال للمؤسسات.', 'واج
   setTimeout(type, del ? 28 : 60);
 })();
 
-/* ============ Cursor, magnetic, tilt ============ */
-const cur = document.getElementById('cursor'), dot = document.getElementById('cursor-dot');
-let cx = 0, cy = 0, tx = 0, ty = 0;
-addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; dot.style.transform = `translate(${tx}px,${ty}px) translate(-50%,-50%)`; });
-(function loop() { cx += (tx - cx) * .18; cy += (ty - cy) * .18; cur.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`; requestAnimationFrame(loop); })();
-document.querySelectorAll('a,button,.card,.pills i').forEach(el => { el.addEventListener('pointerenter', () => cur.classList.add('hover')); el.addEventListener('pointerleave', () => cur.classList.remove('hover')); });
+/* ============ Cursor: spinning Khatam star + comet trail + context labels ============ */
+const cur = document.getElementById('cursor'), dot = document.getElementById('cursor-dot'), curLabel = document.getElementById('cursor-label');
+const trail = document.getElementById('cursor-trail'), tctx = trail.getContext('2d'), pts = [];
+let cx = 0, cy = 0, tx = -100, ty = -100, lastMove = 0;
+function sizeTrail() { trail.width = innerWidth * devicePixelRatio; trail.height = innerHeight * devicePixelRatio; }
+sizeTrail(); addEventListener('resize', sizeTrail);
+addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  tx = e.clientX; ty = e.clientY; lastMove = performance.now();
+  dot.style.transform = `translate(${tx}px,${ty}px) translate(-50%,-50%)`;
+});
+const CURSOR_TARGETS = '.hbug,.holo,a,button,input,.card,.tile,.stat,.pills i,.case-tabs button';
+function labelFor(el) {
+  const ar = document.documentElement.lang === 'ar';
+  if (el.matches('.hbug')) return ar ? 'اسحق!' : 'Squash!';
+  if (el.matches('.holo')) return ar ? 'اسحب' : 'Drag';
+  if (el.matches('a[target=_blank]')) return ar ? 'افتح ↗' : 'Open ↗';
+  if (el.matches('a[download]')) return ar ? 'تنزيل' : 'Save';
+  if (el.matches('a')) return ar ? 'انتقل' : 'Go';
+  return '';
+}
+document.addEventListener('pointerover', e => {
+  if (e.pointerType !== 'mouse') return;
+  const el = e.target.closest(CURSOR_TARGETS);
+  cur.classList.toggle('hover', !!el);
+  cur.classList.toggle('text', !!el && el.matches('input'));
+  const lbl = el ? labelFor(el) : '';
+  curLabel.textContent = lbl; cur.classList.toggle('labeled', !!lbl);
+});
+addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') cur.classList.add('down'); });
+addEventListener('pointerup', () => cur.classList.remove('down'));
+(function loop() {
+  cx += (tx - cx) * 0.2; cy += (ty - cy) * 0.2;
+  cur.style.transform = `translate(${cx}px,${cy}px) translate(-50%,-50%)`;
+  cur.classList.toggle('hole', holing);
+  // comet trail: short-lived gold sparks behind the cursor
+  const now = performance.now();
+  if (now - lastMove < 80) pts.push({ x: tx, y: ty, t: now });
+  while (pts.length && now - pts[0].t > 420) pts.shift();
+  tctx.clearRect(0, 0, trail.width, trail.height);
+  const d = devicePixelRatio;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], life = 1 - (now - p.t) / 420;
+    tctx.beginPath(); tctx.arc(p.x * d, p.y * d, (0.6 + life * 2.4) * d, 0, Math.PI * 2);
+    tctx.fillStyle = i % 3 === 0 ? `rgba(45,212,191,${life * 0.5})` : `rgba(246,213,139,${life * 0.55})`;
+    tctx.fill();
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ============ Magnetic buttons, tilt cards ============ */
 
 document.querySelectorAll('.magnetic').forEach(el => {
   el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(); el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .3}px,${(e.clientY - r.top - r.height / 2) * .4}px)`; });
@@ -488,9 +533,9 @@ const cmds = {
   help: () => '<span class="g">whoami</span>  <span class="g">skills</span>  <span class="g">impact</span>  <span class="g">edu</span>  <span class="g">contact</span>  <span class="g">resume</span>  <span class="g">shape &lt;text|star|wave|grid|knot|helix|globe&gt;</span>  <span class="g">clear</span>  <span class="g">exit</span>',
   whoami: () => 'Syed Abdulla — Full-Stack Software Engineer @ insightsoftware (Logi Symphony BI).\n3+ yrs · React · TypeScript · Java · Spring Boot · Bengaluru, India.',
   skills: () => '<span class="t">frontend</span> React, TypeScript, AG-Grid Enterprise, Blueprint.js, WCAG\n<span class="t">backend </span> Java, Spring Boot, Spring Security ACL, JPA, Liquibase, PostgreSQL\n<span class="t">infra   </span> Docker, Kubernetes, GitHub Actions, Jenkins, SonarCloud',
-  impact: () => '−42% grid bundle · 100+ enterprise customers · 130K-point charts\n90+ bugs fixed · 89 backports · +40% WCAG compliance · 0 spillovers',
+  impact: () => '−42% grid bundle · public Playground (playground.simba.com) · 130K-point charts\n305 Jira tickets · 95 bugs · 4 spikes · 89 backports · +40% WCAG · 0 spillovers',
   edu: () => 'B.Tech CSE, UVCE Bengaluru (2019–23) · CGPA 9.09 · Siemens Scholar',
-  contact: () => 'email    syedabdulla761@gmail.com\nphone    +91 88676 18049\ngithub   github.com/syedabdulla761',
+  contact: () => 'email    syedabdulla761@gmail.com\nphone    +91 88676 18049\nlinkedin linkedin.com/in/syed-abdulla-6467311b6\ngithub   github.com/syedabdulla761',
   resume: () => { location.href = 'Syed_Abdulla_Resume.pdf'; return 'Downloading résumé…'; },
   clear: () => { out.innerHTML = ''; return null; },
   exit: () => { toggleTerm(false); return null; },
@@ -635,13 +680,13 @@ const AR_SRC = [
   ['.title .reveal', ['سيد', 'عبدالله']], ['#quick h3', 'سيد عبدالله'], ['.hud-t small', 'المستوى'],
   ['.cmdk-foot', '<span><kbd>↑</kbd><kbd>↓</kbd> تنقّل</span><span><kbd>↵</kbd> اختيار</span>'],
   ['#achp .eyebrow', ['🏆 استكشافك', '🐞 الأخطاء المخفية — كل واحد منها قصة حقيقية']], ['#achp h3', 'الإنجازات'], ['#achp-reset', 'إعادة ضبط التقدم'],
-  ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
+  ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#playground"]', 'Playground'], ['.nav nav a[href="#work"]', 'الخبرات'],
   ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
   // hero
   ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
   ['#tag-pre', 'أبني'],
   ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'], ['#quick-btn', '⚡ ملخص في 30 ثانية'],
-  ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند ودول الخليج</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
+  ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند والشرق الأوسط</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
   ['.scroll-hint', '<span></span>مرّر'],
   // about
   ['#about .eyebrow', '01 — نبذة عني'],
@@ -656,15 +701,22 @@ const AR_SRC = [
   ['#impact h2', 'نتائج <span class="gold">تُنجَز</span> فعلًا.'],
   ['#impact .lbl', [
     'تقليص حجم الـ grid bundle (gzipped) بعد الترقية إلى AG-Grid v35',
-    'عميل مؤسسي يستخدم منصة Playground التي بنيتها من الصفر',
+    'تذكرة Jira تم إنجازها منذ 2023 — 95 خطأ، و95 مهمة وميزة، و4 spikes',
     'نقطة بيانات في line charts تُعرض بسلاسة بعد إصلاح تعطّل المتصفح',
-    'خطأ تم إصلاحه · 89 backports عبر 11 إصدارًا مدعومًا',
+    'خطأ تم إصلاحه في الإنتاج · 89 backports عبر 11 إصدارًا مدعومًا',
     'تحسّن في التوافق مع WCAG — أكثر من 35 إصلاحًا خلال ربع سنة',
     'commit من AI agents تمت مراجعتها · أكثر من 20 مهمة سُلّمت بـ agentic workflows']],
+  // featured work
+  ['#playground .eyebrow', '✦ عمل مميز'],
+  ['#playground h2', 'منصة <span class="gold">Playground</span> — بنيتها من الصفر، ومتاحة للعالم.'],
+  ['#playground .case-lead', 'بيئة التجربة العامة لمنتج embedded analytics من insightsoftware — حيث تجرّب آلاف الشركات من العملاء والمهتمين المنتج، وتحصل على embed code جاهز، وترى الـ white-labelling مباشرة.'],
+  ['#playground .case-points li', ['<b>بنيتها من الصفر</b> — React للواجهة و Spring Boot للـ backend.', '<b>منشورة ومسوَّقة للعامة</b> حول العالم.', 'Embed options و interactivity profiles و UI themes و cross-visual filtering و Embed API و event listeners.', 'AI chatbot، وعروض pixel-perfect و Crystal Reports، و preview deploy لكل branch عبر GitHub Actions.']],
+  ['#playground .case-tabs button', ['الترحيب', 'تغيير الثيم مباشرة', 'التفاعل', 'Cross-filtering', 'Embed API']],
+  ['#playground .case-copy > .btn', 'استكشفها مباشرة ↗'],
   // experience
   ['#work .eyebrow', '03 — الخبرات'],
   ['#work h2', 'insightsoftware <span class="muted">· Logi Symphony</span>'],
-  ['#work .sub', 'فبراير 2023 – الآن · بنغالورو · <a href="https://playground.logi-symphony.com" target="_blank" rel="noopener">playground.logi-symphony.com ↗</a>'],
+  ['#work .sub', 'فبراير 2023 – الآن · بنغالورو · <a href="https://playground.simba.com/" target="_blank" rel="noopener">playground.simba.com ↗</a>'],
   ['#work .tl-head span', ['سبتمبر 2025 – الآن', 'يوليو 2023 – أغسطس 2025', 'فبراير 2023 – يونيو 2023']],
   ['#work .card h4', [
     'ترقية AG-Grid من v31 إلى v35', 'تنظيم المجلدات — Backend', 'تنظيم المجلدات — واجهة المستخدم',
@@ -682,11 +734,11 @@ const AR_SRC = [
     'أنهيت ديون إمكانية الوصول لربع سنة كامل (أكثر من 35 إصلاحًا) — مشاكل aria-hidden و tabindex، ودعم قارئ الشاشة باستخدام Blueprint.js في الـ dashboards والقوائم.',
     'اكتشفت أن encoded characters في الـ URLs كانت تعطّل النشر على Windows — إصلاح أثّر على 100% من عملاء Windows.',
     'Connections tab و File tab والـ right panel لـ Source V2. وسلّمت Hierarchical Filter و Auto-Apply Filter Panel دون أي تأخير عبر أكثر من 6 sprints.',
-    'بنيت منصة Playground للعملاء من الصفر، ويستخدمها الآن أكثر من 100 عميل مؤسسي لاستكشاف المنتج.',
+    'بنيت منصة Playground العامة من الصفر — منشورة ومسوَّقة عالميًا كبيئة لتجربة المنتج لآلاف الشركات من عملاء insightsoftware.',
     'قدت تطوير الـ frontend لميزة جديدة في الهاكاثون، واعتُمدت لاحقًا ضمن خطة المنتج.',
     'خفّضت أخطاء SonarCloud عالية الخطورة إلى الصفر، وأصلحت تعطّل المتصفح في charts تعرض أكثر من 130 ألف نقطة، وحللت مشاكل النشر في K8s/Docker و CentOS/PostgreSQL.',
     'نقلت مكتبة الـ logging في المنتج إلى Serilog، مما سهّل الصيانة.']],
-  ['#work .card .kpi', ['−42% bundle', '~4K LOC', 'من البداية للنهاية', 'تسليم فردي', 'من 5+ إلى 1', 'AI chatbot', '+40% WCAG', '100% من عملاء Windows', 'دون تأخير', '+100 عميل', '🏆 ضمن خطة المنتج', '0 high-severity']],
+  ['#work .card .kpi', ['−42% bundle', '~4K LOC', 'من البداية للنهاية', 'تسليم فردي', 'من 5+ إلى 1', 'AI chatbot', '+40% WCAG', '100% من عملاء Windows', 'دون تأخير', '🌍 متاحة عالميًا', '🏆 ضمن خطة المنتج', '0 high-severity']],
   // skills (group names stay in English: Frontend, Backend…)
   ['#skills .eyebrow', '04 — المهارات'],
   ['#skills h2', 'أدوات <span class="gold">أتقنها</span>.'],
@@ -714,7 +766,7 @@ const AR_SRC = [
   ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
   ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
   ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
-  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للـ terminal</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
+  ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">الكود المصدري ↗</a> · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر · <kbd>~</kbd> للـ terminal</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
   // chrome
   ['.dock a', ['<span>⌂</span>الرئيسية', '<span>◉</span>مباشر', '<span>▤</span>الخبرات', '<span>✉</span>تواصل']], ['#dock-k', '<span>⌘</span>القائمة'],
   ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة</span>'],
@@ -724,10 +776,10 @@ const AR_SRC = [
   ['#quick dd', [
     'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
     'Enterprise BI و Data Visualization (Logi Symphony)',
-    'تقليص الـ grid bundle بنسبة 42% · منصة Playground يستخدمها أكثر من 100 عميل مؤسسي · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
+    'بنيت منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
-    'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند ودول الخليج']],
-  ['#quick .q-actions > *', ['تنزيل السيرة الذاتية', 'نسخ البريد', 'واتساب']],
+    'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند والشرق الأوسط (الخليج)']],
+  ['#quick .q-actions > *', ['تنزيل السيرة الذاتية', 'نسخ البريد', 'واتساب', null]],
 ];
 const AR = AR_SRC.flatMap(([sel, ar]) => Array.isArray(ar)
   ? [...document.querySelectorAll(sel)].map((el, i) => ar[i] != null && { el, ar: ar[i], en: el.innerHTML }).filter(Boolean)
@@ -806,7 +858,11 @@ const ACTIONS = [
   { g: 'Recruiter', i: '⧉', l: 'Copy email address', h: 'syedabdulla761@gmail.com', run: () => copy('syedabdulla761@gmail.com') },
   { g: 'Recruiter', i: '☏', l: 'Copy phone number', h: '+91 88676 18049', run: () => copy('+91 88676 18049') },
   { g: 'Recruiter', i: '💬', l: 'Message on WhatsApp', run: () => open('https://wa.me/918867618049', '_blank') },
+  { g: 'Recruiter', i: 'in', l: 'Open LinkedIn', k: 'profile', run: () => open('https://www.linkedin.com/in/syed-abdulla-6467311b6/', '_blank') },
   { g: 'Recruiter', i: '⌥', l: 'Open GitHub', run: () => open('https://github.com/syedabdulla761', '_blank') },
+  { g: 'Recruiter', i: '▶', l: 'Open the live Playground', k: 'simba demo work', run: () => open('https://playground.simba.com/', '_blank') },
+  { g: 'Navigate', i: '✦', l: 'Featured work: Playground', k: 'case study simba', run: go('playground') },
+  { g: 'Experience', i: '{}', l: 'View this site\'s source', k: 'repo code github', run: () => open('https://github.com/syedabdulla761/syedabdulla761.github.io', '_blank') },
   { g: 'Experience', i: '✦', l: 'Toggle العربية / English', k: 'arabic language rtl', run: toggleLang },
   { g: 'Experience', i: '♪', l: 'Toggle ambient sound', k: 'audio music', run: () => sndBtn.click() },
   { g: 'Experience', i: '›_', l: 'Open terminal', k: 'console shell', run: () => toggleTerm(true) },
@@ -815,7 +871,7 @@ const ACTIONS = [
 ];
 const ACT_AR = { 'Home': 'الرئيسية', 'About': 'نبذة عني', 'Impact in numbers': 'الإنجازات بالأرقام', 'Experience': 'الخبرات', 'Tech stack': 'المهارات',
   'Education & recognition': 'التعليم والتقدير', 'Contact': 'تواصل', '30-second summary': 'ملخص في 30 ثانية', 'Download résumé (PDF)': 'تنزيل السيرة الذاتية (PDF)',
-  'Copy email address': 'نسخ البريد الإلكتروني', 'Copy phone number': 'نسخ رقم الهاتف', 'Message on WhatsApp': 'مراسلة عبر واتساب', 'Open GitHub': 'فتح GitHub',
+  'Copy email address': 'نسخ البريد الإلكتروني', 'Copy phone number': 'نسخ رقم الهاتف', 'Message on WhatsApp': 'مراسلة عبر واتساب', 'Open GitHub': 'فتح GitHub', 'Open LinkedIn': 'فتح LinkedIn', 'Open the live Playground': 'فتح Playground مباشرة', 'Featured work: Playground': 'عمل مميز: Playground', "View this site's source": 'الكود المصدري لهذا الموقع',
   'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Open terminal': 'فتح الـ Terminal', 'Trigger shockwave': 'إطلاق موجة صادمة' };
 const GRP_AR = { 'Navigate': 'التنقل', 'Recruiter': 'لمسؤولي التوظيف', 'Experience': 'التجربة', 'Morph particles': 'تشكيل الجسيمات', 'Play': 'اللعب' };
 const actLabel = a => document.documentElement.lang !== 'ar' ? a.l

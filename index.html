@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Syed Abdulla — Software Engineer</title>
-<meta name="description" content="Syed Abdulla — Full-Stack Software Engineer (React · TypeScript · Java · Spring Boot). 3+ years building enterprise BI at insightsoftware, Bengaluru." />
+<meta name="description" content="Syed Abdulla — Full-Stack Software Engineer (React · TypeScript · Java · Spring Boot). 3+ years building enterprise BI at insightsoftware, Bengaluru. Built the public Playground at playground.simba.com." />
 <meta property="og:title" content="Syed Abdulla — Full-Stack Software Engineer" />
 <meta property="og:description" content="React · TypeScript · Java · Spring Boot. Enterprise data visualization, 42% bundle cuts, WCAG, end-to-end ownership." />
 <meta property="og:type" content="website" />
@@ -13,6 +13,9 @@
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://syedabdulla761.github.io/og.png" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Person","name":"Syed Abdulla","jobTitle":"Full-Stack Software Engineer","worksFor":{"@type":"Organization","name":"insightsoftware"},"address":{"@type":"PostalAddress","addressLocality":"Bengaluru","addressCountry":"IN"},"email":"mailto:syedabdulla761@gmail.com","url":"https://syedabdulla761.github.io/","sameAs":["https://www.linkedin.com/in/syed-abdulla-6467311b6/","https://github.com/syedabdulla761"],"alumniOf":"University Visvesvaraya College of Engineering","knowsAbout":["React","TypeScript","Java","Spring Boot","PostgreSQL","AG-Grid","WCAG"]}
+</script>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
@@ -29,12 +32,12 @@
 <div id="loader"><div class="loader-star"></div><div class="loader-text">Initialising <span id="load-pct">0</span>%</div></div>
 <canvas id="bg"></canvas>
 <div class="grain"></div>
-<div id="cursor"></div><div id="cursor-dot"></div>
+<div id="cursor" aria-hidden="true"><svg viewBox="0 0 40 40"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="11" y="11" width="18" height="18"/><rect x="11" y="11" width="18" height="18" transform="rotate(45 20 20)"/></g></svg><span id="cursor-label"></span></div><div id="cursor-dot" aria-hidden="true"></div><canvas id="cursor-trail" aria-hidden="true"></canvas>
 
 <header class="nav">
   <a href="#home" class="logo">S<span>A</span></a>
   <nav>
-    <a href="#about">About</a><a href="#impact">Impact</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#live">Live</a><a href="#contact">Contact</a>
+    <a href="#about">About</a><a href="#impact">Impact</a><a href="#playground">Playground</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#live">Live</a><a href="#contact">Contact</a>
   </nav>
   <div class="nav-r">
     <button class="btn-sm icon kbar desk" id="kbar-btn" aria-label="Open command menu" title="Command menu">⌘K</button>
@@ -63,7 +66,7 @@
       <button class="btn ghost magnetic" id="quick-btn">⚡ 30-sec summary</button>
     </div>
     <div class="hero-meta">
-      <span>📍 Bengaluru, India</span><span>🌍 Open to India &amp; GCC roles</span><span>🟢 3+ yrs · insightsoftware</span>
+      <span>📍 Bengaluru, India</span><span>🌍 Open to India &amp; Middle East roles</span><span>🟢 3+ yrs · insightsoftware</span>
     </div>
     <div class="scroll-hint"><span></span>Scroll</div>
   </section>
@@ -96,11 +99,47 @@
       <h2>Results that <span class="gold">ship</span>.</h2>
       <div class="stats">
         <div class="stat tilt"><div class="num" data-to="42" data-suf="%">0</div><div class="lbl">Grid bundle reduction (gzipped) after AG-Grid v35 migration</div></div>
-        <div class="stat tilt"><div class="num" data-to="100" data-suf="+">0</div><div class="lbl">Enterprise customers using the Playground I built from scratch</div></div>
+        <div class="stat tilt"><div class="num" data-to="305" data-suf="">0</div><div class="lbl">Jira tickets delivered since 2023 — 95 bugs, 95 stories &amp; tasks, 4 spikes</div></div>
         <div class="stat tilt"><div class="num" data-to="130" data-suf="K+">0</div><div class="lbl">Data points rendered after fixing a line-chart browser crash</div></div>
-        <div class="stat tilt"><div class="num" data-to="90" data-suf="+">0</div><div class="lbl">Bugs fixed · 89 backports across 11 supported releases</div></div>
+        <div class="stat tilt"><div class="num" data-to="95" data-suf="">0</div><div class="lbl">Production bugs fixed · 89 backports across 11 supported releases</div></div>
         <div class="stat tilt"><div class="num" data-to="40" data-suf="%">0</div><div class="lbl">WCAG compliance uplift — 35+ a11y fixes in one quarter</div></div>
         <div class="stat tilt"><div class="num" data-to="150" data-suf="+">0</div><div class="lbl">AI-agent commits reviewed · 20+ tickets shipped agentically</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED WORK: PLAYGROUND -->
+  <section id="playground" data-shape="globe">
+    <div class="wrap">
+      <div class="eyebrow">✦ Featured work</div>
+      <h2>The <span class="gold">Playground</span> — built from zero, live for the world.</h2>
+      <div class="case">
+        <div class="case-media">
+          <div class="browser">
+            <div class="browser-bar"><i></i><i></i><i></i><span class="url">playground.simba.com</span><a href="https://playground.simba.com/" target="_blank" rel="noopener">Open ↗</a></div>
+            <div class="shots">
+              <img class="on" src="img/playground-home.webp" alt="Playground welcome page — Embedded Analytics Developer Samples and Playground" width="1440" height="900" decoding="async" />
+              <img data-src="img/playground-themes.gif" alt="Live theme switching: the same dashboard re-skinned as Default, Composer, Dark and Modern" width="720" height="450" decoding="async" />
+              <img data-src="img/playground-interactivity.webp" alt="Interactivity profiles: toggling dashboard capabilities for embedded users" width="1440" height="900" decoding="async" />
+              <img data-src="img/playground-cross-filter.webp" alt="Cross-visual filtering across an embedded dashboard" width="1440" height="900" decoding="async" />
+              <img data-src="img/playground-embed-api.webp" alt="Embed API: the visual builder listing embeddable visuals" width="1440" height="900" decoding="async" />
+            </div>
+          </div>
+          <div class="case-tabs" role="tablist" aria-label="Playground screens">
+            <button class="on" role="tab" aria-selected="true">Welcome</button><button role="tab">Live theming</button><button role="tab">Interactivity</button><button role="tab">Cross-filtering</button><button role="tab">Embed API</button>
+          </div>
+        </div>
+        <div class="case-copy glass">
+          <p class="case-lead">The public developer sandbox for insightsoftware's embedded analytics — where thousands of client companies and prospects try the product, grab working embed code and see white-labelling live.</p>
+          <ul class="case-points">
+            <li><b>Built from the ground up</b> — React front end and Spring Boot back end.</li>
+            <li><b>Publicly deployed and marketed</b> to a worldwide audience.</li>
+            <li>Embed options, interactivity profiles, UI themes, cross-visual filtering, Embed API and event listeners.</li>
+            <li>AI chatbot, pixel-perfect and Crystal Reports showcases, per-branch preview deploys with GitHub Actions.</li>
+          </ul>
+          <div class="case-stack"><i>React</i><i>TypeScript</i><i>Spring Boot</i><i>Embed SDK</i><i>GitHub Actions</i></div>
+          <a class="btn magnetic" href="https://playground.simba.com/" target="_blank" rel="noopener">Explore it live ↗</a>
+        </div>
       </div>
     </div>
   </section>
@@ -110,7 +149,7 @@
     <div class="wrap">
       <div class="eyebrow">03 — Experience</div>
       <h2>insightsoftware <span class="muted">· Logi Symphony BI</span></h2>
-      <p class="sub">Feb 2023 – Present · Bengaluru · <a href="https://playground.logi-symphony.com" target="_blank" rel="noopener">playground.logi-symphony.com ↗</a></p>
+      <p class="sub">Feb 2023 – Present · Bengaluru · <a href="https://playground.simba.com/" target="_blank" rel="noopener">playground.simba.com ↗</a></p>
 
       <div class="timeline">
         <div class="tl-item">
@@ -132,7 +171,7 @@
           <div class="tl-dot"></div>
           <div class="tl-head"><h3>Associate Software Engineer</h3><span>Jul 2023 – Aug 2025</span></div>
           <div class="cards">
-            <article class="card tilt"><div class="chip">React + Spring Boot</div><h4>Playground App — from zero</h4><p>Built the customer-facing Playground from the ground up, now used by 100+ enterprise customers for product exploration.</p><div class="kpi">100+ customers</div></article>
+            <article class="card tilt"><div class="chip">React + Spring Boot</div><h4>Playground App — from zero</h4><p>Built the public Playground from the ground up — deployed and marketed worldwide as the product sandbox for insightsoftware's thousands of client companies.</p><div class="kpi">🌍 Public · worldwide</div></article>
             <article class="card tilt"><div class="chip">Innovation</div><h4>Hackathon Win — “Composer”</h4><p>Led frontend for a new hackathon feature, later approved for the product roadmap.</p><div class="kpi">🏆 Roadmapped</div></article>
             <article class="card tilt"><div class="chip">Quality · Perf</div><h4>SonarCloud &amp; 130K-point charts</h4><p>Drove SonarCloud High-severity bugs to 0; resolved a browser crash on line charts rendering 130K+ points; fixed K8s/Docker &amp; CentOS/PostgreSQL deploy issues.</p><div class="kpi">0 high-sev</div></article>
           </div>
@@ -234,6 +273,7 @@
         <a class="btn magnetic" href="mailto:syedabdulla761@gmail.com">✉ syedabdulla761@gmail.com</a>
         <a class="btn ghost magnetic" href="https://wa.me/918867618049" target="_blank" rel="noopener">WhatsApp</a>
         <a class="btn ghost magnetic" href="tel:+918867618049">+91 88676 18049</a>
+        <a class="btn ghost magnetic" href="https://www.linkedin.com/in/syed-abdulla-6467311b6/" target="_blank" rel="noopener">LinkedIn ↗</a>
         <a class="btn ghost magnetic" href="https://github.com/syedabdulla761" target="_blank" rel="noopener">GitHub ↗</a>
       </div>
       <div class="clocks">
@@ -243,7 +283,7 @@
         <div><span data-tz="Asia/Qatar">--:--</span><small>Doha</small></div>
       </div>
     </div>
-    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · <span class="desk">Click empty space for a shockwave · <kbd>⌘K</kbd> commands · <kbd>~</kbd> terminal</span><span class="touch">Tap empty space for a shockwave · Tilt your phone</span></footer>
+    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">Source ↗</a> · <span class="desk">Click empty space for a shockwave · <kbd>⌘K</kbd> commands · <kbd>~</kbd> terminal</span><span class="touch">Tap empty space for a shockwave · Tilt your phone</span></footer>
   </section>
 </main>
 
@@ -272,16 +312,17 @@
       <dt>Experience</dt><dd>3+ years (Feb 2023 – present) · Promoted to SE in 2 yrs</dd>
       <dt>Core stack</dt><dd>React, TypeScript, Java, Spring Boot, PostgreSQL</dd>
       <dt>Domain</dt><dd>Enterprise BI &amp; data visualisation (Logi Symphony)</dd>
-      <dt>Highlights</dt><dd>−42% grid bundle · Playground used by 100+ enterprise customers · +40% WCAG compliance · 0 sprint spillovers</dd>
+      <dt>Highlights</dt><dd>Built the public Playground (playground.simba.com) · −42% grid bundle · 305 Jira tickets (95 bugs, 4 spikes) · +40% WCAG · 0 sprint spillovers</dd>
       <dt>Education</dt><dd>B.Tech CSE, UVCE Bengaluru · CGPA 9.09 · Siemens Scholar</dd>
       <dt>Reviews</dt><dd>“Exceeds Expectations” in 2025 &amp; 2026</dd>
       <dt>Languages</dt><dd>English, Hindi, Kannada, Telugu</dd>
-      <dt>Location</dt><dd>Bengaluru, India · Open to India &amp; GCC roles</dd>
+      <dt>Location</dt><dd>Bengaluru, India · Open to India &amp; Middle East (GCC) roles</dd>
     </dl>
     <div class="q-actions">
       <a class="btn" href="Syed_Abdulla_Resume.pdf" download>Download résumé</a>
       <button class="btn ghost" data-copy="syedabdulla761@gmail.com">Copy email</button>
       <a class="btn ghost" href="https://wa.me/918867618049" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/syed-abdulla-6467311b6/" target="_blank" rel="noopener">LinkedIn</a>
     </div>
   </div>
 </div>

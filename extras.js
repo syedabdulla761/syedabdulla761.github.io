@@ -52,7 +52,7 @@ function tickLive() {
     : (diff === 0 ? 'Same timezone as me — full working-day overlap' : `You're ${fmtDur(diff)} ${diff > 0 ? 'ahead of' : 'behind'} Bengaluru · ${fmtDur(ov)} of shared working hours`);
   $('lv-bar').style.width = (ov / 540 * 100) + '%';
   // career counter
-  const start = new Date('2023-02-01T09:00:00+05:30'), now = new Date();
+  const start = new Date('2023-02-20T09:00:00+05:30'), now = new Date();
   let y = now.getFullYear() - start.getFullYear(), m = now.getMonth() - start.getMonth(), d = now.getDate() - start.getDate();
   if (d < 0) { m--; d += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
   if (m < 0) { y--; m += 12; }
@@ -193,7 +193,7 @@ const BUGS = [
   { host: 'SonarCloud', hint: 'Experience', hintAr: 'الخبرات', ar: 'خفّض أخطاء SonarCloud عالية الخطورة في الـ frontend إلى الصفر.', fact: 'Drove SonarCloud High-severity frontend bugs down to zero.' },
   { host: '#skills .skill:nth-child(2)', hint: 'Stack', hintAr: 'المهارات', ar: 'بنى أدوار صلاحيات على مستوى المجلد باستخدام Spring Security ACL.', fact: 'Built folder-scoped roles with a custom Spring Security ACL evaluator and advisory-lock name uniqueness.' },
   { host: '#edu .ring:nth-child(2)', hint: 'Education', hintAr: 'التعليم', ar: 'حصل على 96.16% في الصف الثاني عشر و96.48% في الصف العاشر.', fact: 'Scored 96.16% in Class 12 and 96.48% in Class 10.' },
-  { host: '#live .t-ship', hint: 'Live', hintAr: 'مباشر', ar: 'أكثر من 90 خطأ تم إصلاحه و89 backports عبر 11 إصدارًا مدعومًا منذ 2023.', fact: '90+ bugs fixed and 89 backports across 11 supported releases since 2023.' },
+  { host: '#live .t-ship', hint: 'Live', hintAr: 'مباشر', ar: '95 خطأ تم إصلاحه و89 backports عبر 11 إصدارًا مدعومًا — ضمن 305 تذكرة Jira منذ 2023.', fact: '95 bugs fixed and 89 backports across 11 supported releases — part of 305 Jira tickets since 2023.' },
 ];
 const ACH = [
   { id: 'hello', i: '👋', n: 'First contact', d: 'Scrolled past the hero', an: 'أول تواصل', ad: 'بدأت التصفح', xp: 10 },
@@ -322,3 +322,20 @@ SA.actions.push(
 );
 
 SA.on('langchange', () => { $('lv-tz').textContent = cityOf(visitorTz); tickLive(); renderWx(); renderDep(); renderHud(false); });
+
+/* ============ Featured work: Playground screen carousel ============ */
+{
+  const shots = [...document.querySelectorAll('#playground .shots img')], tabs = [...document.querySelectorAll('#playground .case-tabs button')];
+  let cur = 0, timer = null, visible = false;
+  const load = img => { if (img.dataset.src) { img.src = img.dataset.src; img.removeAttribute('data-src'); } };
+  function show(i) {
+    cur = (i + shots.length) % shots.length;
+    load(shots[cur]); load(shots[(cur + 1) % shots.length]); // prefetch the next screen
+    shots.forEach((s, k) => s.classList.toggle('on', k === cur));
+    tabs.forEach((t, k) => { t.classList.toggle('on', k === cur); t.setAttribute('aria-selected', k === cur); });
+  }
+  const DUR = i => i === 1 ? 11000 : 4500; // give the theme-switching GIF time to play through
+  const schedule = () => { clearTimeout(timer); if (visible) timer = setTimeout(() => { show(cur + 1); schedule(); }, DUR(cur)); };
+  tabs.forEach((t, k) => t.addEventListener('click', () => { show(k); schedule(); }));
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) { load(shots[1]); schedule(); } else clearTimeout(timer); }, { threshold: 0.3 }).observe(document.getElementById('playground'));
+}
