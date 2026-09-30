@@ -30,38 +30,94 @@ const BLOOM = isMobile ? 0.95 : 0.75;
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
-/* ============ Immersive scroll: sections as 3D layers you fly through ============ */
+/* ============ Tunnel scroll: the page never moves — you travel through it ============ */
+// Every section is a fixed panel. Scrolling scrubs a timeline: between sections you fly down
+// a 3D tunnel (the next section grows out of the vanishing point, blurred, then sharpens while
+// the current one swells past the camera). Long sections scroll normally while you're parked in them.
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const layers = [...document.querySelectorAll('main > section')].map(sec => {
+const tunnelOn = !reducedMotion;
+const touchDev = matchMedia('(hover: none)').matches;
+const panels = [...document.querySelectorAll('main > section')].map(sec => {
   const layer = document.createElement('div'); layer.className = 'layer';
-  [...sec.children].forEach(c => { if (!c.matches('footer, .scroll-hint')) layer.appendChild(c); });
+  [...sec.children].forEach(c => { if (!c.matches('.scroll-hint')) layer.appendChild(c); });
   sec.insertBefore(layer, sec.firstChild);
-  return { sec, layer, top: 0, h: 0 };
+  return { sec, layer, h: 0, arrive: 0, leave: 0 };
 });
-function measure() { layers.forEach(l => { l.top = l.sec.offsetTop; l.h = l.sec.offsetHeight; }); }
-measure(); addEventListener('resize', measure); addEventListener('load', measure); setInterval(measure, 2000);
-function updateLayers() {
-  if (reducedMotion) return;
-  const vh = innerHeight, sy = window.scrollY;
-  for (const l of layers) {
-    const top = l.top - sy, bottom = top + l.h;
-    if (bottom < -vh * 0.3 || top > vh * 1.3) continue;
-    const enter = l.top === 0 ? 1 : Math.min(Math.max((vh - top) / (vh * 0.75), 0), 1);
-    const exit = Math.min(Math.max(1 - bottom / (vh * 0.55), 0), 1);
-    const e = 1 - Math.pow(1 - enter, 3), x = exit * exit;
-    l.sec.style.perspectiveOrigin = `50% ${Math.round(vh / 2 - top)}px`;
-    l.layer.style.transform = e > 0.999 && x < 0.001 ? 'none'
-      : `translate3d(0,${((1 - e) * 70).toFixed(1)}px,${(-(1 - e) * 280 + x * 220).toFixed(1)}px) rotateX(${((1 - e) * 12 - x * 6).toFixed(2)}deg)`;
-  }
+const spacer = document.createElement('div'); spacer.id = 'tunnel-space'; spacer.setAttribute('aria-hidden', 'true');
+document.body.appendChild(spacer);
+if (tunnelOn) document.documentElement.classList.add('tunnel');
+const TRAVEL = () => innerHeight * 1.15, HOLD = () => innerHeight * 0.35;
+let lastTY = -1, curIdx = -1, travelT = 1;
+function measure() {
+  if (!tunnelOn) return;
+  const vh = innerHeight; let y = 0;
+  panels.forEach((p, i) => {
+    const was = p.sec.classList.contains('on');
+    p.sec.classList.add('on');
+    p.h = Math.max(p.layer.scrollHeight, vh);
+    if (!was) p.sec.classList.remove('on');
+    if (i) y += TRAVEL();
+    p.arrive = Math.round(y); y += Math.max(0, p.h - vh) + HOLD(); p.leave = Math.round(y);
+  });
+  spacer.style.height = Math.round(y + vh) + 'px';
+  lastTY = -1;
 }
+measure();
+addEventListener('resize', measure); addEventListener('load', measure);
+document.fonts?.ready.then(measure);
+function updateTunnel() {
+  if (!tunnelOn) return;
+  const y = window.scrollY, vh = innerHeight;
+  if (y === lastTY) return; lastTY = y;
+  let k = 0; while (k < panels.length - 1 && y >= panels[k + 1].arrive) k++;
+  let from = -1, t = 1;
+  if (k < panels.length - 1 && y > panels[k].leave) { from = k; k = k + 1; t = (y - panels[from].leave) / TRAVEL(); }
+  travelT = from >= 0 ? t : 1;
+  panels.forEach((p, i) => {
+    const show = i === k || i === from;
+    p.sec.classList.toggle('on', show);
+    if (!show) return;
+    const maxOff = Math.max(0, p.h - vh);
+    let off, scale = 1, op = 1, blur = 0;
+    // phones skip the blur filter for performance, so they cross-fade faster to avoid overlap
+    if (i === from) { off = maxOff; const e = t * t; scale = 1 + e * 2.4; op = 1 - Math.min(1, t * (touchDev ? 2.6 : 1.6)); blur = t * 16; }
+    else if (from >= 0) { off = 0; const e = 1 - Math.pow(1 - t, 3); scale = 0.18 + 0.82 * e; op = Math.max(0, Math.min(1, (t - (touchDev ? 0.42 : 0.2)) * (touchDev ? 2 : 1.7))); blur = (1 - e) * 14; }
+    else off = Math.min(Math.max(0, y - p.arrive), maxOff);
+    p.layer.style.transformOrigin = `50% ${Math.round(off + vh / 2)}px`;
+    p.layer.style.transform = `translate3d(0,${-Math.round(off)}px,0) scale(${scale.toFixed(4)})`;
+    p.layer.style.opacity = op < 1 ? op.toFixed(3) : '';
+    p.layer.style.filter = blur > 0.4 && !touchDev ? `blur(${blur.toFixed(1)}px)` : '';
+    p.sec.style.zIndex = i === from ? 3 : 2;
+  });
+  const cur = from >= 0 && t < 0.5 ? from : k;
+  panels.forEach((p, i) => p.sec.classList.toggle('cur', i === cur));
+  if (cur !== curIdx) { curIdx = cur; arrive(panels[cur].sec); }
+}
+function arrive(sec) {
+  setShape(sec.dataset.shape);
+  document.querySelectorAll('.nav nav a, .dock a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + sec.id));
+  SA.emit('section', sec.id);
+}
+addEventListener('scroll', updateTunnel, { passive: true });
+
 // Inertial smooth scrolling on desktop (Lenis); phones keep native momentum scrolling
 let lenis = null;
-if (window.Lenis && !reducedMotion && !matchMedia('(hover: none)').matches) {
-  lenis = new window.Lenis({ lerp: 0.085, anchors: true });
+if (window.Lenis && !reducedMotion && !touchDev) {
+  lenis = new window.Lenis({ lerp: 0.08, anchors: false });
   const lraf = t => { lenis.raf(t); requestAnimationFrame(lraf); };
   requestAnimationFrame(lraf);
 }
-const scrollToEl = el => lenis ? lenis.scrollTo(el, { duration: 1.6 }) : el.scrollIntoView({ behavior: 'smooth' });
+const scrollToEl = el => {
+  const p = panels.find(q => q.sec === el || q.sec.contains(el));
+  if (!tunnelOn || !p) return el.scrollIntoView({ behavior: 'smooth' });
+  lenis ? lenis.scrollTo(p.arrive, { duration: 2.2 }) : window.scrollTo({ top: p.arrive, behavior: 'smooth' });
+};
+// In-page links travel through the tunnel instead of jumping
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const el = document.getElementById(a.getAttribute('href').slice(1)); if (!el) return;
+  e.preventDefault(); scrollToEl(el);
+}, true);
 
 // ---- Shape generators (each returns Float32Array N*3) ----
 function textShape(str) {
@@ -204,6 +260,7 @@ function radarShape() {
 }
 
 const shapes = {};
+const labelsAr = { text: '01 / كوكبة', star: '02 / نجمة الخاتم', wave: '03 / محيط البيانات', grid: '04 / AG-GRID', knot: '05 / عقدة طوقية', helix: '06 / حلزون', radar: '07 / رادار مباشر', globe: '08 / بنغالورو ← الخليج' };
 const labels = { text: '01 / CONSTELLATION', star: '02 / KHATAM STAR', wave: '03 / DATA OCEAN', grid: '04 / AG-GRID', knot: '05 / TORUS KNOT', helix: '06 / HELIX', radar: '07 / LIVE RADAR', globe: '08 / BENGALURU → GCC' };
 
 // ---- Geometry ----
@@ -249,28 +306,50 @@ const world = new THREE.Group(); // user-controlled orbit (drag / swipe) wraps t
 world.add(points);
 scene.add(world);
 
-// Background star field that flies toward the camera; scrolling stretches it into warp streaks
-const STAR_N = isMobile ? 1100 : 2200;
-const starPos = new Float32Array(STAR_N * 3), streakPos = new Float32Array(STAR_N * 6);
+// Background star field drifting toward the camera
+const STAR_N = isMobile ? 900 : 1800;
+const starPos = new Float32Array(STAR_N * 3);
 for (let i = 0; i < STAR_N; i++) { starPos[i * 3] = rand(-70, 70); starPos[i * 3 + 1] = rand(-45, 45); starPos[i * 3 + 2] = rand(-140, 20); }
 const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, color: 0x8d8a84, transparent: true, opacity: 0.65 }));
-const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(streakPos, 3));
-const streakMat = new THREE.LineBasicMaterial({ color: 0xf6e7c8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-const streaks = new THREE.LineSegments(lg, streakMat);
-scene.add(stars, streaks);
-let sv = 0, prevSY = window.scrollY; // smoothed scroll velocity (px / frame)
+const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.09, color: 0x8d8a84, transparent: true, opacity: 0.6 }));
+scene.add(stars);
+
+// The tunnel: rings of light and longitudinal guide lines converging on a glowing singularity
+const TUN_R = 12.5, RINGS = 44, PER = isMobile ? 64 : 110, GAP = 7, TUN_LEN = RINGS * GAP, TUN_NEAR = 20 - TUN_LEN;
+const ringPos = new Float32Array(RINGS * PER * 3), ringCol = new Float32Array(RINGS * PER * 3);
+const cGold = new THREE.Color(0xe8b04b), cTeal = new THREE.Color(0x2dd4bf);
+for (let r = 0; r < RINGS; r++) for (let j = 0; j < PER; j++) {
+  const i = (r * PER + j) * 3, a = j / PER * Math.PI * 2 + r * 0.21, rad = TUN_R * (1 + rand(-0.05, 0.05));
+  ringPos[i] = Math.cos(a) * rad; ringPos[i + 1] = Math.sin(a) * rad; ringPos[i + 2] = 20 - r * GAP;
+  const c = r % 4 === 0 ? cTeal : cGold; ringCol[i] = c.r; ringCol[i + 1] = c.g; ringCol[i + 2] = c.b;
+}
+const ringGeo = new THREE.BufferGeometry();
+ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPos, 3)); ringGeo.setAttribute('color', new THREE.BufferAttribute(ringCol, 3));
+const tunnel = new THREE.Group();
+tunnel.add(new THREE.Points(ringGeo, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })));
+const LN = 32, linePos = new Float32Array(LN * 6);
+for (let i = 0; i < LN; i++) { const a = i / LN * Math.PI * 2, x = Math.cos(a) * TUN_R, y = Math.sin(a) * TUN_R; linePos.set([x, y, 22, x, y, TUN_NEAR], i * 6); }
+const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+tunnel.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xe8b04b, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false })));
+const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+const gx = gc.getContext('2d'), grd = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+grd.addColorStop(0, 'rgba(255,232,180,1)'); grd.addColorStop(0.22, 'rgba(232,176,75,.45)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+gx.fillStyle = grd; gx.fillRect(0, 0, 128, 128);
+const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(gc), blending: THREE.AdditiveBlending, depthWrite: false, fog: false, transparent: true, opacity: 0.3 }));
+core.position.set(0, 0, -140); core.scale.setScalar(46); tunnel.add(core);
+scene.add(tunnel);
+let sv = 0, prevSY = window.scrollY, tunZ = 0; // smoothed scroll velocity (px / frame), tunnel travel
 
 let burst = 0, hole = 0, holing = false;
 let target = null, currentKey = 'text', morphT = 0;
 // mouse = camera parallax (also driven by gyro); aim = interaction point (repel / burst / black hole)
-const mouse = new THREE.Vector2(9, 9), aim = new THREE.Vector2(9, 9), mouseWorld = new THREE.Vector3(), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const mouse = new THREE.Vector2(0, 0), aim = new THREE.Vector2(9, 9), mouseWorld = new THREE.Vector3(), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const userRot = new THREE.Vector2(), userVel = new THREE.Vector2();
 
 function setShape(key) {
   if (!shapes[key]) return;
   currentKey = key; target = shapes[key]; morphT = 0;
-  document.getElementById('shape-label').textContent = labels[key];
+  document.getElementById('shape-label').textContent = (document.documentElement.lang === 'ar' ? labelsAr : labels)[key];
   chime(Object.keys(labels).indexOf(key));
 }
 
@@ -337,23 +416,24 @@ function tick() {
   camera.position.x += (mouse.x * 1.5 - camera.position.x) * 0.03;
   camera.position.y += (mouse.y * 1.0 - camera.position.y) * 0.03;
   camera.lookAt(0, 0, 0);
-  // warp: stars rush forward with scroll velocity; FOV widens like acceleration
+  // tunnel flight: rings rush toward the camera as you scroll, faster mid-transition
   const sy = window.scrollY; sv += ((sy - prevSY) - sv) * 0.18; prevSY = sy;
-  const spd = 0.012 + sv * 0.05, len = Math.min(Math.abs(sv) * 0.35, 12) * Math.sign(spd);
-  for (let i = 0; i < STAR_N; i++) {
-    const k = i * 3; let z = starPos[k + 2] + spd;
-    if (z > 22) z -= 162; else if (z < -140) z += 162;
-    starPos[k + 2] = z;
-    const j = i * 6;
-    streakPos[j] = streakPos[j + 3] = starPos[k]; streakPos[j + 1] = streakPos[j + 4] = starPos[k + 1];
-    streakPos[j + 2] = z; streakPos[j + 5] = z - len;
+  const inTransit = travelT < 1, boost = inTransit ? 2.6 : 1;
+  const spd = 0.02 + sv * 0.035 * boost;
+  tunZ += spd;
+  for (let r = 0; r < RINGS; r++) {
+    const z = (((20 - r * GAP + tunZ) - TUN_NEAR) % TUN_LEN + TUN_LEN) % TUN_LEN + TUN_NEAR;
+    for (let j = 0, b = r * PER * 3 + 2; j < PER; j++, b += 3) ringPos[b] = z;
   }
-  sg.attributes.position.needsUpdate = true; lg.attributes.position.needsUpdate = true;
-  streakMat.opacity = Math.min(Math.abs(sv) / 14, 0.75);
-  const fov = 55 + Math.min(Math.abs(sv) * 0.35, 20);
-  if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * 0.1; camera.updateProjectionMatrix(); }
-  world.rotation.x += Math.max(-0.25, Math.min(0.25, sv * 0.004));
-  updateLayers();
+  ringGeo.attributes.position.needsUpdate = true;
+  tunnel.rotation.z += 0.0006 + sv * 0.0003 * boost;
+  for (let i = 0, k = 2; i < STAR_N; i++, k += 3) { let z = starPos[k] + spd * 0.6; if (z > 22) z -= 162; else if (z < -140) z += 162; starPos[k] = z; }
+  sg.attributes.position.needsUpdate = true;
+  core.material.opacity = 0.18 + (inTransit ? Math.sin(travelT * Math.PI) * 0.45 : 0);
+  const fov = 55 + Math.min(Math.abs(sv) * 0.12, 6) + (inTransit ? Math.sin(travelT * Math.PI) * 7 : 0);
+  if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * 0.12; camera.updateProjectionMatrix(); }
+  world.rotation.x += Math.max(-0.2, Math.min(0.2, sv * 0.003));
+  updateTunnel();
 
   composer ? composer.render() : renderer.render(scene, camera);
   requestAnimationFrame(tick);
@@ -378,7 +458,7 @@ addEventListener('pointermove', e => {
   if (press.moved > 12 && !holing) { userVel.x = dx * 0.0045; if (e.pointerType === 'mouse') userVel.y = dy * 0.003; }
   if (press.moved > 160 && !holing && !press.spun) { press.spun = true; SA.emit('spin'); }
 });
-addEventListener('pointerleave', () => { mouse.set(9, 9); aim.set(9, 9); });
+addEventListener('pointerleave', () => { mouse.set(0, 0); aim.set(9, 9); });
 addEventListener('pointerdown', e => {
   toNdc(e, aim); if (e.pointerType === 'mouse') toNdc(e, mouse);
   clearTimeout(aimT);
@@ -445,7 +525,7 @@ let pct = 0; const pi = setInterval(() => { pct = Math.min(pct + Math.random() *
 const sections = [...document.querySelectorAll('section[data-shape]')];
 const navLinks = [...document.querySelectorAll('.nav nav a')];
 const io = new IntersectionObserver(es => es.forEach(e => {
-  if (!e.isIntersecting) return;
+  if (!e.isIntersecting || tunnelOn) return;
   setShape(e.target.dataset.shape);
   navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
 }), { threshold: 0.45 });
@@ -658,7 +738,8 @@ sndBtn.onclick = () => {
   if (!soundOn) return;
   SA.emit('sound');
   [0, 2, 4, 7].forEach((k, i) => setTimeout(() => SA.pluck(SCALE[k + 3], 0.07), i * 110));
-  toast(matchMedia('(hover: none)').matches ? 'Sound on — swipe sideways to strum 🎵' : 'Sound on — sweep your cursor across the screen to play 🎵');
+  const ar = document.documentElement.lang === 'ar', touch = matchMedia('(hover: none)').matches;
+  toast(ar ? (touch ? 'الصوت يعمل — اسحب أفقيًا للعزف 🎵' : 'الصوت يعمل — حرّك المؤشر عبر الشاشة للعزف 🎵') : (touch ? 'Sound on — swipe sideways to strum 🎵' : 'Sound on — sweep your cursor across the screen to play 🎵'));
 };
 
 /* ============ English ⇄ العربية (full site, right-to-left) ============ */
@@ -666,6 +747,9 @@ sndBtn.onclick = () => {
 // Tech names stay in English, as is standard in Gulf tech hiring. Leaves are targeted so live
 // values (clocks, counters, hidden bugs) inside their parents survive the swap.
 const AR_SRC = [
+  ['.title .reveal', ['سيد', 'عبدالله']], ['#quick h3', 'سيد عبدالله'], ['.hud-t small', 'المستوى'],
+  ['.cmdk-foot', '<span><kbd>↑</kbd><kbd>↓</kbd> تنقّل</span><span><kbd>↵</kbd> اختيار</span>'],
+  ['#achp .eyebrow', ['🏆 استكشافك', '🐞 الأخطاء المخفية — كل واحد منها قصة حقيقية']], ['#achp h3', 'الإنجازات'], ['#achp-reset', 'إعادة ضبط التقدم'],
   ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
   ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
   // hero
@@ -774,6 +858,8 @@ function toggleLang() {
     document.documentElement.lang = isAr ? 'ar' : 'en';
     document.documentElement.dir = isAr ? 'rtl' : 'ltr';
     langBtn.textContent = isAr ? 'EN' : 'ع';
+    document.getElementById('shape-label').textContent = (isAr ? labelsAr : labels)[currentKey];
+    cIn.placeholder = isAr ? 'ابحث عن إجراء أو قسم أو شكل…' : 'Search actions, sections, shapes…';
     measure();
     SA.emit('langchange');
     if (isAr) SA.emit('lang');
@@ -806,7 +892,7 @@ const toastEl = document.getElementById('toast');
 let toastT;
 function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2200); }
 async function copy(text) {
-  try { await navigator.clipboard.writeText(text); toast('Copied ✓ ' + text); }
+  try { await navigator.clipboard.writeText(text); toast((document.documentElement.lang === 'ar' ? 'تم النسخ ✓ ' : 'Copied ✓ ') + text); }
   catch { toast(text); }
 }
 document.querySelectorAll('[data-copy]').forEach(b => { b.onclick = () => copy(b.dataset.copy); });
@@ -846,17 +932,25 @@ const ACTIONS = [
   { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => SA.shockwave() },
   ...Object.keys(labels).map(k => ({ g: 'Morph particles', i: '◇', l: 'Shape → ' + labels[k].split(' / ')[1].toLowerCase(), k, run: () => setShape(k) })),
 ];
+const ACT_AR = { 'Home': 'الرئيسية', 'About': 'نبذة عني', 'Impact in numbers': 'الإنجازات بالأرقام', 'Experience': 'الخبرات', 'Tech stack': 'المهارات التقنية',
+  'Education & recognition': 'التعليم والتقدير', 'Contact': 'تواصل', '30-second summary': 'ملخص في 30 ثانية', 'Download résumé (PDF)': 'تنزيل السيرة الذاتية (PDF)',
+  'Copy email address': 'نسخ البريد الإلكتروني', 'Copy phone number': 'نسخ رقم الهاتف', 'Message on WhatsApp': 'مراسلة عبر واتساب', 'Open GitHub': 'فتح GitHub',
+  'Toggle العربية / English': 'English / العربية', 'Toggle ambient sound': 'تشغيل الصوت أو إيقافه', 'Open terminal': 'فتح الطرفية', 'Trigger shockwave': 'إطلاق موجة صادمة' };
+const GRP_AR = { 'Navigate': 'التنقل', 'Recruiter': 'لمسؤولي التوظيف', 'Experience': 'التجربة', 'Morph particles': 'تشكيل الجسيمات', 'Play': 'اللعب' };
+const actLabel = a => document.documentElement.lang !== 'ar' ? a.l
+  : a.g === 'Morph particles' ? 'الشكل ← ' + labelsAr[a.k].split(' / ')[1] : (ACT_AR[a.l] || a.la || a.l);
+const grpLabel = g => document.documentElement.lang === 'ar' ? (GRP_AR[g] || g) : g;
 let filtered = ACTIONS, sel = 0;
 function renderCmdk() {
   const q = cIn.value.trim().toLowerCase();
-  filtered = ACTIONS.filter(a => !q || q.split(/\s+/).every(w => (a.l + ' ' + (a.k || '') + ' ' + a.g).toLowerCase().includes(w)));
+  filtered = ACTIONS.filter(a => !q || q.split(/\s+/).every(w => (a.l + ' ' + actLabel(a) + ' ' + (a.k || '') + ' ' + a.g + ' ' + grpLabel(a.g)).toLowerCase().includes(w)));
   sel = Math.min(sel, Math.max(filtered.length - 1, 0));
   let html = '', grp = '';
   filtered.forEach((a, i) => {
-    if (a.g !== grp) { grp = a.g; html += `<li class="grp">${grp}</li>`; }
-    html += `<li class="it${i === sel ? ' sel' : ''}" role="option" data-i="${i}"><i>${a.i}</i>${a.l}${a.h ? `<small>${a.h}</small>` : ''}</li>`;
+    if (a.g !== grp) { grp = a.g; html += `<li class="grp">${grpLabel(grp)}</li>`; }
+    html += `<li class="it${i === sel ? ' sel' : ''}" role="option" data-i="${i}"><i>${a.i}</i>${actLabel(a)}${a.h ? `<small>${a.h}</small>` : ''}</li>`;
   });
-  cList.innerHTML = html || '<li class="none">No results — try “resume” or “globe”</li>';
+  cList.innerHTML = html || (document.documentElement.lang === 'ar' ? '<li class="none">لا نتائج — جرّب «resume» أو «globe»</li>' : '<li class="none">No results — try “resume” or “globe”</li>');
   cList.querySelector('.sel')?.scrollIntoView({ block: 'nearest' });
 }
 function openCmdk() { SA.emit('cmdk'); closeOverlays(); lastFocus = document.activeElement; cmdk.hidden = false; cIn.value = ''; sel = 0; renderCmdk(); cIn.focus(); }
@@ -879,9 +973,10 @@ document.getElementById('dock-k').onclick = openCmdk;
 /* ============ Mobile dock active state ============ */
 const dockLinks = [...document.querySelectorAll('.dock a')];
 const dockIO = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) dockLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+  if (e.isIntersecting && !tunnelOn) dockLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
 }), { threshold: 0.4 });
 sections.forEach(s => dockIO.observe(s));
 
 
 Object.assign(SA, { actions: ACTIONS, toast, copy, openCmdk, closeOverlays });
+SA.panels = panels;

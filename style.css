@@ -382,9 +382,16 @@ body{touch-action:pan-y pinch-zoom}
 .achp-reset{margin-top:18px;background:none;border:0;color:var(--muted);font:12px var(--mono);text-decoration:underline;cursor:pointer}
 @media(max-width:560px){.achp-list{grid-template-columns:1fr}}
 
-/* ---- immersive scroll ---- */
-main > section{perspective:1200px}
-.layer{width:100%;transform-origin:50% 50%;will-change:transform}
+/* ---- tunnel scroll: fixed panels scrubbed by scroll position ---- */
+.layer{width:100%}
+html.tunnel main > section{position:fixed;inset:0;height:100vh;height:100dvh;min-height:0;padding:0!important;display:none;overflow:hidden;pointer-events:none}
+html.tunnel main > section.on{display:block}
+html.tunnel main > section.cur{pointer-events:auto}
+html.tunnel .layer{min-height:100%;padding:110px clamp(16px,5vw,64px);display:flex;flex-direction:column;justify-content:center;will-change:transform,opacity}
+html.tunnel .hero > .layer{align-items:flex-start;padding-left:clamp(16px,8vw,120px)}
+html.tunnel[dir=rtl] .hero > .layer{padding-left:clamp(16px,5vw,64px);padding-right:clamp(16px,8vw,120px)}
+html.tunnel #contact .layer{padding-bottom:90px}
+@media(max-width:760px){html.tunnel .layer{padding:96px 16px 150px}html.tunnel .hero > .layer{padding-left:16px}}
 html.lenis,html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto!important}
 .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
@@ -393,8 +400,8 @@ html.lenis,html.lenis body{height:auto}
 /* ---- Arabic: fonts + right-to-left layout ---- */
 html[lang=ar]{--display:'Syne','Noto Kufi Arabic',sans-serif;--body:'Inter','Cairo',system-ui,sans-serif;--mono:'JetBrains Mono','Cairo',monospace}
 html[lang=ar] body *{letter-spacing:0!important}
-html[lang=ar] .title{letter-spacing:-.05em!important}
-html[lang=ar] .title *{letter-spacing:inherit!important}
+html[lang=ar] .title{letter-spacing:0!important;line-height:1.18}
+html[lang=ar] .title .line{padding-bottom:.06em}
 html[lang=ar] h2{line-height:1.4}
 html[lang=ar] h2.big{line-height:1.3}
 html[lang=ar] .eyebrow{font-size:14px}
@@ -403,7 +410,7 @@ html[lang=ar] .card h4,html[lang=ar] .skill h4{line-height:1.5}
 html[lang=ar] .card p,html[lang=ar] .glass p,html[lang=ar] .lbl,html[lang=ar] .sub{line-height:1.95}
 html[lang=ar] .tile small,html[lang=ar] .chip{font-size:12px}
 [dir=rtl] .hero{padding-left:clamp(16px,5vw,64px);padding-right:clamp(16px,8vw,120px)}
-[dir=rtl] .title{direction:ltr;text-align:right}
+[dir=rtl] .title{text-align:right}
 [dir=rtl] .timeline{padding-left:0;padding-right:32px}
 [dir=rtl] .timeline::before{left:auto;right:6px}
 [dir=rtl] .tl-dot{left:auto;right:-32px}
@@ -413,7 +420,10 @@ html[lang=ar] .tile small,html[lang=ar] .chip{font-size:12px}
 [dir=rtl] .tile{text-align:right}
 [dir=rtl] .t-game .play{right:auto;left:22px}
 [dir=rtl] .quick-x{right:auto;left:16px}
-[dir=rtl] .marquee,[dir=rtl] .holo-wrap,[dir=rtl] #term,[dir=rtl] .cmdk-box,[dir=rtl] .achp-box,[dir=rtl] .ach-stack,[dir=rtl] .hud,[dir=rtl] .clocks,[dir=rtl] .nerd b{direction:ltr}
-[dir=rtl] .achp-box{text-align:left}
+[dir=rtl] .marquee,[dir=rtl] .holo-wrap,[dir=rtl] #term,[dir=rtl] .clocks,[dir=rtl] .nerd b{direction:ltr}
+[dir=rtl] .ach-toast{transform:translateX(-120%)}
+[dir=rtl] .ach-toast.in{transform:none}
+[dir=rtl] .ach-stack{right:auto;left:clamp(16px,3vw,40px);align-items:flex-start}
+[dir=rtl] .achp-list em,[dir=rtl] #cmdk-list li.it small{margin-left:0;margin-right:auto}
 @media(max-width:560px){[dir=rtl] .t-game .play{left:auto}}
 [dir=rtl] #ach-tile .big,[dir=rtl] #lv-ship{direction:ltr;text-align:right}
