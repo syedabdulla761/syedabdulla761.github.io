@@ -193,6 +193,7 @@ sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
 const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.08, color: 0x8d8a84, transparent: true, opacity: 0.6 }));
 scene.add(stars);
 
+let burst = 0;
 let target = null, currentKey = 'text', morphT = 0;
 const mouse = new THREE.Vector2(9, 9), mouseWorld = new THREE.Vector3(), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 
@@ -229,8 +230,10 @@ function tick() {
       // mouse repulsion
       const dx = p[ix] - mLocal.x, dy = p[ix + 1] - mLocal.y, d2 = dx * dx + dy * dy;
       if (d2 < 6) { const f = (6 - d2) / 6 * 0.35; p[ix] += dx * f; p[ix + 1] += dy * f; }
+      if (burst > 0.02 && d2 < 90) { const f = burst * 0.9 / (1 + d2 * 0.08); p[ix] += dx * f; p[ix + 1] += dy * f; p[ix + 2] += (seeds[i] - 0.5) * f * 8; }
     }
     geo.attributes.position.needsUpdate = true;
+    burst *= 0.9;
   }
 
   const spin = { globe: 0.12, knot: 0.1, helix: 0.0 }[currentKey] ?? 0;
@@ -253,6 +256,8 @@ addEventListener('resize', () => {
 });
 addEventListener('pointermove', e => { mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1; });
 addEventListener('pointerleave', () => mouse.set(9, 9));
+// Click anywhere empty → supernova shockwave through the particles
+addEventListener('pointerdown', e => { if (!e.target.closest('a,button,input,.card,.glass,.stat,#term')) burst = 1; });
 
 /* ============ Boot ============ */
 const pctEl = document.getElementById('load-pct');
