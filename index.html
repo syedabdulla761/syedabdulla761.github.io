@@ -34,7 +34,7 @@
 <header class="nav">
   <a href="#home" class="logo">S<span>A</span></a>
   <nav>
-    <a href="#about">About</a><a href="#impact">Impact</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#contact">Contact</a>
+    <a href="#about">About</a><a href="#impact">Impact</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#live">Live</a><a href="#contact">Contact</a>
   </nav>
   <div class="nav-r">
     <button class="btn-sm icon kbar desk" id="kbar-btn" aria-label="Open command menu" title="Command menu">⌘K</button>
@@ -183,12 +183,52 @@
     </div>
   </section>
 
+  <!-- LIVE -->
+  <section id="live" data-shape="radar">
+    <div class="wrap">
+      <div class="eyebrow"><span class="live-dot"></span>06 — Right now</div>
+      <h2>Live from <span class="gold">Bengaluru</span>.</h2>
+      <p class="sub">Everything here updates in real time — my local time, the weather outside my window, how your timezone overlaps with mine, and how this very page is performing on your device.</p>
+      <div class="tiles">
+        <div class="tile t-clock"><small>Bengaluru · IST</small><div class="big mono" id="lv-time">--:--:--</div><div class="status" id="lv-status"></div></div>
+        <div class="tile t-you"><small>Your time · <span id="lv-tz"></span></small><div class="big mono" id="lv-you">--:--</div><div class="muted-s" id="lv-overlap"></div><div class="bar"><span id="lv-bar"></span></div></div>
+        <div class="tile t-weather"><small>Weather in Bengaluru</small><div class="big" id="lv-temp">--°</div><div class="muted-s" id="lv-wx">Fetching live conditions…</div></div>
+        <div class="tile t-ship"><small>Building enterprise software for</small><div class="big mono" id="lv-ship">—</div><div class="muted-s"><span id="lv-days"></span> since Feb 2023 · still counting</div></div>
+        <div class="tile t-nerd"><small>Stats for nerds · this page, on your device</small>
+          <ul class="nerd"><li><b id="lv-fps">--</b><span>FPS</span></li><li><b id="lv-pts">--</b><span>particles</span></li><li><b id="lv-load">--</b><span>load time</span></li><li><b id="lv-gpu">--</b><span>GPU</span></li></ul>
+          <canvas id="lv-spark"></canvas></div>
+        <div class="tile t-deploy"><small>Site last deployed</small><div class="big" id="lv-dep">—</div><div class="muted-s mono" id="lv-msg"></div></div>
+        <button class="tile t-game" id="game-btn"><small>Mini-game · 20 seconds</small><div class="big">🐞 Squash the bugs</div><div class="muted-s">I've fixed 90+ in production. How many can you get?</div><span class="play">Play ▶</span></button>
+      </div>
+    </div>
+  </section>
+
   <!-- CONTACT -->
   <section id="contact" data-shape="globe">
     <div class="wrap center">
-      <div class="eyebrow">06 — Contact</div>
+      <div class="eyebrow">07 — Contact</div>
       <h2 class="big">Let's build something<br/><span class="gold">remarkable</span>.</h2>
       <p class="sub">From Bengaluru to Dubai, Riyadh, Doha &amp; beyond — I'm open to conversations about full-stack and frontend-heavy roles.</p>
+      <div class="holo-stage">
+        <div class="holo-wrap">
+          <div class="holo" id="holo" role="button" tabindex="0" aria-label="Business card — tap to flip">
+            <div class="face front">
+              <div class="hc-top"><span class="logo">S<span>A</span></span><span class="hc-chip"></span></div>
+              <div class="hc-name">Syed Abdulla</div>
+              <div class="hc-role">Full-Stack Software Engineer</div>
+              <div class="hc-info"><span>✉ syedabdulla761@gmail.com</span><span>☏ +91 88676 18049</span><span>⌖ Bengaluru · India</span></div>
+              <div class="hc-stack">React · TypeScript · Java · Spring Boot</div>
+              <div class="foil"></div>
+            </div>
+            <div class="face back">
+              <div id="qr"></div>
+              <div class="hc-back-t"><div class="hc-scan">Scan to open this portfolio</div><div class="hc-url">syedabdulla761.github.io</div><div class="hc-star"></div></div>
+              <div class="foil"></div>
+            </div>
+          </div>
+        </div>
+        <div class="holo-actions"><button class="btn ghost" id="flip-btn">↻ Flip card</button><a class="btn ghost" href="Syed_Abdulla.vcf" download>📇 Save contact</a></div>
+      </div>
       <div class="contact-row">
         <a class="btn magnetic" href="mailto:syedabdulla761@gmail.com">✉ syedabdulla761@gmail.com</a>
         <a class="btn ghost magnetic" href="https://wa.me/918867618049" target="_blank" rel="noopener">WhatsApp</a>
@@ -208,7 +248,7 @@
 
 <!-- Mobile dock -->
 <nav class="dock" aria-label="Mobile navigation">
-  <a href="#home"><span>⌂</span>Home</a><a href="#impact"><span>◈</span>Impact</a><a href="#work"><span>▤</span>Work</a><a href="#contact"><span>✉</span>Contact</a><button id="dock-k"><span>⌘</span>Menu</button>
+  <a href="#home"><span>⌂</span>Home</a><a href="#live"><span>◉</span>Live</a><a href="#work"><span>▤</span>Work</a><a href="#contact"><span>✉</span>Contact</a><button id="dock-k"><span>⌘</span>Menu</button>
 </nav>
 
 <!-- Command palette -->
@@ -246,6 +286,16 @@
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
+<!-- Mini-game -->
+<div id="game" class="overlay game" role="dialog" aria-modal="true" aria-label="Squash the bugs" hidden>
+  <div class="g-hud"><span>🐞 <b id="g-score">0</b></span><span>⏱ <b id="g-time">20</b>s</span><button id="g-x" aria-label="Close game">×</button></div>
+  <div id="g-field"></div>
+  <div class="g-card" id="g-start"><div class="eyebrow">Mini-game</div><h3>Squash the bugs 🐞</h3><p>Tap bugs before they crawl away. Careful — don't squash the ✨ features (−3)!</p><p class="g-best" id="g-best"></p><button class="btn" id="g-go">Start · 20s</button></div>
+  <div class="g-card" id="g-end" hidden><div class="eyebrow">Time's up</div><h3 id="g-title"></h3><p id="g-msg"></p><div class="q-actions"><button class="btn" id="g-again">Play again</button><a class="btn ghost" href="#contact" id="g-hire">Hire the exterminator →</a></div></div>
+</div>
+
+<div class="gesture-hint" id="ghint"><span class="desk">✦ <b>Drag</b> to spin · <b>Hold</b> for a black hole · <b>Click</b> for a shockwave</span><span class="touch">✦ <b>Swipe</b> sideways to spin · <b>Hold</b> for a black hole · <b>Tap</b> for a shockwave</span></div>
+
 <!-- Terminal easter egg -->
 <div id="term" aria-hidden="true">
   <div class="term-bar"><i></i><i></i><i></i><span>syed@portfolio: ~</span><button id="term-x" aria-label="Close">×</button></div>
@@ -253,7 +303,9 @@
   <div class="term-in"><span>❯</span><input id="term-input" autocomplete="off" spellcheck="false" placeholder="type 'help'" /></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script type="module" src="main.js"></script>
+<script type="module" src="extras.js"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // Network-first service worker: always fresh when online, still works offline.
-const CACHE = 'sa-portfolio-v1';
-const CORE = ['./', 'index.html', 'style.css', 'main.js', 'favicon.svg', 'icon-192.png', 'Syed_Abdulla_Resume.pdf'];
+const CACHE = 'sa-portfolio-v2';
+const CORE = ['./', 'index.html', 'style.css', 'main.js', 'extras.js', 'favicon.svg', 'icon-192.png', 'Syed_Abdulla_Resume.pdf'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

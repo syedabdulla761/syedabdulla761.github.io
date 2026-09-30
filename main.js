@@ -19,11 +19,12 @@ const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 20
 camera.position.set(0, 0, 22);
 
 // Cinematic bloom on capable (non-mobile) devices
-let composer = null;
+let composer = null, bloomPass = null;
 if (!isMobile) {
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12));
+  bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12);
+  composer.addPass(bloomPass);
   composer.addPass(new OutputPass());
 }
 
@@ -155,8 +156,22 @@ function globeShape() {
   return out;
 }
 
+// Radar: concentric rings, spokes and a sweeping wedge — for the live section
+function radarShape() {
+  const out = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    const m = Math.random();
+    let r, a;
+    if (m < 0.55) { r = (1 + (Math.random() * 5 | 0)) * 1.9 + rand(-.05, .05); a = rand(0, Math.PI * 2); }
+    else if (m < 0.72) { a = (Math.random() * 12 | 0) * Math.PI / 6; r = rand(0.3, 9.5); }
+    else { a = Math.pow(Math.random(), 2) * 0.9; r = Math.sqrt(Math.random()) * 9.5; }
+    out[i * 3] = Math.cos(a) * r; out[i * 3 + 1] = Math.sin(a) * r; out[i * 3 + 2] = rand(-0.2, 0.2) - 4;
+  }
+  return out;
+}
+
 const shapes = {};
-const labels = { text: '01 / CONSTELLATION', star: '02 / KHATAM STAR', wave: '03 / DATA OCEAN', grid: '04 / AG-GRID', knot: '05 / TORUS KNOT', helix: '06 / HELIX', globe: '07 / BENGALURU → GCC' };
+const labels = { text: '01 / CONSTELLATION', star: '02 / KHATAM STAR', wave: '03 / DATA OCEAN', grid: '04 / AG-GRID', knot: '05 / TORUS KNOT', helix: '06 / HELIX', radar: '07 / LIVE RADAR', globe: '08 / BENGALURU → GCC' };
 
 // ---- Geometry ----
 const geo = new THREE.BufferGeometry();
@@ -197,7 +212,9 @@ const mat = new THREE.ShaderMaterial({
     }`
 });
 const points = new THREE.Points(geo, mat);
-scene.add(points);
+const world = new THREE.Group(); // user-controlled orbit (drag / swipe) wraps the particle cloud
+world.add(points);
+scene.add(world);
 
 // Background star field
 const sg = new THREE.BufferGeometry(), sp = new Float32Array(2500 * 3);
@@ -206,9 +223,11 @@ sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
 const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.08, color: 0x8d8a84, transparent: true, opacity: 0.6 }));
 scene.add(stars);
 
-let burst = 0;
+let burst = 0, hole = 0, holing = false;
 let target = null, currentKey = 'text', morphT = 0;
-const mouse = new THREE.Vector2(9, 9), mouseWorld = new THREE.Vector3(), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+// mouse = camera parallax (also driven by gyro); aim = interaction point (repel / burst / black hole)
+const mouse = new THREE.Vector2(9, 9), aim = new THREE.Vector2(9, 9), mouseWorld = new THREE.Vector3(), ray = new THREE.Raycaster(), plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const userRot = new THREE.Vector2(), userVel = new THREE.Vector2();
 
 function setShape(key) {
   if (!shapes[key]) return;
@@ -219,14 +238,22 @@ function setShape(key) {
 
 // ---- Animation loop ----
 const clock = new THREE.Clock();
-let scrollY = 0, rotTarget = new THREE.Vector2();
+let scrollY = 0, press = null, fps = 60, fpsFrames = 0, fpsT = performance.now();
 function tick() {
-  const t = clock.getElapsedTime();
+  const t = clock.getElapsedTime(), now = performance.now();
   mat.uniforms.uTime.value = t;
   morphT = Math.min(morphT + 0.006, 1);
   const ease = 0.035 + morphT * 0.05;
 
-  ray.setFromCamera(mouse, camera);
+  fpsFrames++;
+  if (now - fpsT >= 500) { fps = Math.round(fpsFrames * 1000 / (now - fpsT)); fpsFrames = 0; fpsT = now; }
+
+  // long-press on empty space → black hole
+  if (press && !holing && press.moved < 12 && now - press.t > 380) { holing = true; navigator.vibrate?.(15); SA.tone(70, 1.6, 'sawtooth', 0.05, 40); }
+  hole = holing ? Math.min(hole + 0.012, 1) : Math.max(hole - 0.06, 0);
+  if (bloomPass) bloomPass.strength = 0.75 + hole * 0.9 + burst * 0.5;
+
+  ray.setFromCamera(aim, camera);
   ray.ray.intersectPlane(plane, mouseWorld);
   const inv = points.matrixWorld.clone().invert();
   const mLocal = mouseWorld.clone().applyMatrix4(inv);
@@ -238,23 +265,33 @@ function tick() {
       let tx = target[ix], ty = target[ix + 1], tz = target[ix + 2];
       if (currentKey === 'wave') { ty = -5 + Math.sin(tx * 0.35 + t * 1.4) * 1.3 + Math.cos(tz * 0.45 + t) * 1.1 + Math.sin((tx + tz) * 0.2 + t * .6) * .8; }
       const lag = 0.4 + seeds[i] * 0.6;
-      p[ix] += (tx - p[ix]) * ease * lag;
-      p[ix + 1] += (ty - p[ix + 1]) * ease * lag;
-      p[ix + 2] += (tz - p[ix + 2]) * ease * lag;
-      // mouse repulsion
+      const pull = hole > 0.01 ? ease * lag * (1 - hole * 0.85) : ease * lag;
+      p[ix] += (tx - p[ix]) * pull;
+      p[ix + 1] += (ty - p[ix + 1]) * pull;
+      p[ix + 2] += (tz - p[ix + 2]) * pull;
       const dx = p[ix] - mLocal.x, dy = p[ix + 1] - mLocal.y, d2 = dx * dx + dy * dy;
-      if (d2 < 6) { const f = (6 - d2) / 6 * 0.35; p[ix] += dx * f; p[ix + 1] += dy * f; }
-      if (burst > 0.02 && d2 < 90) { const f = burst * 0.9 / (1 + d2 * 0.08); p[ix] += dx * f; p[ix + 1] += dy * f; p[ix + 2] += (seeds[i] - 0.5) * f * 8; }
+      if (hole > 0.01) { // swirl into the event horizon
+        if (d2 < 600) { const f = hole * 0.07 / (1 + d2 * 0.012); p[ix] += -dx * f - dy * f * 0.9; p[ix + 1] += -dy * f + dx * f * 0.9; p[ix + 2] *= 1 - hole * 0.04; }
+      } else if (d2 < 6) { const f = (6 - d2) / 6 * 0.35; p[ix] += dx * f; p[ix + 1] += dy * f; }
+      if (burst > 0.02 && d2 < 140) { const f = burst * 0.9 / (1 + d2 * 0.07); p[ix] += dx * f; p[ix + 1] += dy * f; p[ix + 2] += (seeds[i] - 0.5) * f * 8; }
     }
     geo.attributes.position.needsUpdate = true;
     burst *= 0.9;
   }
 
-  const spin = { globe: 0.12, knot: 0.1, helix: 0.0 }[currentKey] ?? 0;
+  const spin = { globe: 0.12, knot: 0.1 }[currentKey] ?? 0;
   if (spin) points.rotation.y += spin * 0.016; else points.rotation.y += (0 - points.rotation.y) * 0.03;
   if (currentKey === 'helix') points.rotation.x = Math.sin(t * .3) * .2;
   else points.rotation.x += (0 - points.rotation.x) * .03;
-  rotTarget.set(mouse.y * 0.08, mouse.x * 0.12);
+  if (currentKey === 'radar') points.rotation.z -= 0.004; else points.rotation.z += (0 - points.rotation.z) * 0.03;
+
+  // user orbit with inertia; drifts home when idle so shapes stay readable
+  userRot.x += userVel.y; userRot.y += userVel.x;
+  userVel.multiplyScalar(press ? 0.8 : 0.95);
+  if (!press) { userRot.y = Math.atan2(Math.sin(userRot.y), Math.cos(userRot.y)) * 0.992; userRot.x *= 0.985; }
+  userRot.x = Math.max(-1.1, Math.min(1.1, userRot.x));
+  world.rotation.set(userRot.x, userRot.y, 0);
+
   camera.position.x += (mouse.x * 1.5 - camera.position.x) * 0.03;
   camera.position.y += (mouse.y * 1.0 - camera.position.y) * 0.03;
   camera.lookAt(0, 0, 0);
@@ -269,15 +306,39 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
   composer?.setSize(innerWidth, innerHeight);
 });
-addEventListener('pointermove', e => { mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1; });
-addEventListener('pointerleave', () => mouse.set(9, 9));
-// Click anywhere empty → supernova shockwave through the particles
-addEventListener('pointerdown', e => {
-  mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-  if (e.target.closest('a,button,input,.card,.glass,.stat,#term,.overlay,.dock')) return;
-  burst = 1; navigator.vibrate?.(25);
+
+/* ---- Gestures: tap = shockwave · hold = black hole · drag/swipe = orbit ---- */
+const UI = 'a,button,input,.card,.glass,.stat,#term,.overlay,.dock,.holo-wrap,.tile,.gesture-hint';
+const toNdc = (e, v) => v.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+let aimT;
+addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse') { toNdc(e, mouse); toNdc(e, aim); }
+  else if (press) toNdc(e, aim);
+  if (!press) return;
+  const dx = e.clientX - press.lx, dy = e.clientY - press.ly;
+  press.lx = e.clientX; press.ly = e.clientY; press.moved += Math.abs(dx) + Math.abs(dy);
+  if (press.moved > 12 && !holing) { userVel.x = dx * 0.0045; if (e.pointerType === 'mouse') userVel.y = dy * 0.003; }
 });
-// Gyroscope parallax on phones (tilt to move the constellation)
+addEventListener('pointerleave', () => { mouse.set(9, 9); aim.set(9, 9); });
+addEventListener('pointerdown', e => {
+  toNdc(e, aim); if (e.pointerType === 'mouse') toNdc(e, mouse);
+  clearTimeout(aimT);
+  if (e.button > 0 || e.target.closest(UI)) return;
+  if (e.pointerType === 'mouse') e.preventDefault(); // no text selection while dragging the cosmos
+  press = { t: performance.now(), moved: 0, lx: e.clientX, ly: e.clientY };
+});
+function endPress(cancelled) {
+  if (!press) return;
+  const quick = performance.now() - press.t < 350 && press.moved < 12;
+  if (holing) { burst = 1 + hole * 1.2; navigator.vibrate?.([20, 30, 60]); SA.tone(48, 0.9, 'sine', 0.22, 180); }
+  else if (quick && !cancelled) { burst = 1; navigator.vibrate?.(25); SA.tone(220, 0.35, 'triangle', 0.08, 90); }
+  holing = false; press = null;
+  if (matchMedia('(hover: none)').matches) aimT = setTimeout(() => aim.set(9, 9), 900);
+}
+addEventListener('pointerup', () => endPress(false));
+addEventListener('pointercancel', () => endPress(true));
+
+// Gyroscope parallax on phones (tilt to move the camera)
 let gyroAsked = false;
 function onTilt(e) { if (e.gamma == null) return; mouse.x = Math.max(-1, Math.min(1, e.gamma / 35)); mouse.y = Math.max(-1, Math.min(1, -(e.beta - 40) / 35)); }
 if (matchMedia('(hover: none)').matches) {
@@ -288,12 +349,27 @@ if (matchMedia('(hover: none)').matches) {
   }, { passive: true });
 }
 
+// Shared hooks for extras.js (live panel, holo card, mini-game)
+const SA = window.SA = {
+  N, get fps() { return fps; }, renderer,
+  setShape: k => setShape(k),
+  shockwave: () => { aim.set(0, 0); burst = 1.4; },
+  tone(freq, dur = 0.3, type = 'sine', vol = 0.1, slideTo) {
+    if (!soundOn || !actx) return;
+    const t0 = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur + 0.05);
+  },
+};
+
 /* ============ Boot ============ */
 const pctEl = document.getElementById('load-pct');
 let pct = 0; const pi = setInterval(() => { pct = Math.min(pct + Math.random() * 18, 96); pctEl.textContent = pct | 0; }, 90);
 (document.fonts ? document.fonts.load('800 100px Syne') : Promise.resolve()).catch(() => {}).then(() => {
   shapes.text = textShape('SA'); shapes.star = starShape(); shapes.wave = waveShape(); shapes.grid = gridShape();
-  shapes.knot = knotShape(); shapes.helix = helixShape(); shapes.globe = globeShape();
+  shapes.knot = knotShape(); shapes.helix = helixShape(); shapes.radar = radarShape(); shapes.globe = globeShape();
   setShape('text');
   clearInterval(pi); pctEl.textContent = 100;
   setTimeout(() => { document.getElementById('loader').classList.add('done'); document.body.classList.add('loaded'); }, 350);
@@ -310,7 +386,7 @@ const io = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: 0.45 });
 sections.forEach(s => io.observe(s));
 
-document.querySelectorAll('h2, .sub, .glass, .stat, .card, .tl-head, .ring, .langs span, .contact-row, .clocks, .eyebrow').forEach(el => el.classList.add('rv'));
+document.querySelectorAll('h2, .sub, .glass, .stat, .card, .tl-head, .ring, .langs span, .contact-row, .clocks, .eyebrow, .tile, .holo-stage').forEach(el => el.classList.add('rv'));
 const rio = new IntersectionObserver(es => es.forEach(e => {
   if (!e.isIntersecting) return;
   const el = e.target;
@@ -449,7 +525,7 @@ sndBtn.onclick = () => {
 /* ============ English ⇄ العربية ============ */
 const AR = [
   ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#work"]', 'الخبرات'],
-  ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
+  ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
   ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
   ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'],
   ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند ودول الخليج</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
@@ -458,6 +534,7 @@ const AR = [
   ['#work h2', 'insightsoftware <span class="muted">· منصة Logi Symphony</span>'],
   ['#skills h2', 'أدوات <span class="gold">أتقنها</span>.'],
   ['#edu h2', '<span class="gold">تميّز</span> أكاديمي.'],
+  ['#live h2', 'مباشرة من <span class="gold">بنغالورو</span>.'],
   ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
   ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص تطوير الواجهات والتطوير الشامل (Full-Stack).'],
 ].map(([sel, ar]) => { const el = document.querySelector(sel); return el && { el, ar, en: el.innerHTML }; }).filter(Boolean);
@@ -535,7 +612,7 @@ const ACTIONS = [
   { g: 'Experience', i: '✦', l: 'Toggle العربية / English', k: 'arabic language rtl', run: toggleLang },
   { g: 'Experience', i: '♪', l: 'Toggle ambient sound', k: 'audio music', run: () => sndBtn.click() },
   { g: 'Experience', i: '›_', l: 'Open terminal', k: 'console shell', run: () => toggleTerm(true) },
-  { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => { mouse.set(0, 0); burst = 1; } },
+  { g: 'Experience', i: '✺', l: 'Trigger shockwave', k: 'explode burst', run: () => SA.shockwave() },
   ...Object.keys(labels).map(k => ({ g: 'Morph particles', i: '◇', l: 'Shape → ' + labels[k].split(' / ')[1].toLowerCase(), k, run: () => setShape(k) })),
 ];
 let filtered = ACTIONS, sel = 0;
@@ -575,3 +652,5 @@ const dockIO = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: 0.4 });
 sections.forEach(s => dockIO.observe(s));
 
+
+Object.assign(SA, { actions: ACTIONS, toast, copy, openCmdk, closeOverlays });

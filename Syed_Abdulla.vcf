@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Abdulla;Syed;;;
+FN:Syed Abdulla
+TITLE:Full-Stack Software Engineer
+ORG:insightsoftware
+TEL;TYPE=CELL:+918867618049
+EMAIL;TYPE=INTERNET:syedabdulla761@gmail.com
+URL:https://syedabdulla761.github.io/
+ADR;TYPE=WORK:;;;Bengaluru;Karnataka;;India
+NOTE:React · TypeScript · Java · Spring Boot
+END:VCARD
