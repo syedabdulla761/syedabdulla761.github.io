@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Syed Abdulla — Software Engineer</title>
+<meta name="description" content="Syed Abdulla — Full-Stack Software Engineer (React · TypeScript · Java · Spring Boot). 3+ years building enterprise BI at insightsoftware, Bengaluru." />
+<meta property="og:title" content="Syed Abdulla — Full-Stack Software Engineer" />
+<meta property="og:description" content="React · TypeScript · Java · Spring Boot. Enterprise data visualization, 42% bundle cuts, WCAG, end-to-end ownership." />
+<meta name="theme-color" content="#06070b" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&family=Noto+Naskh+Arabic:wght@500&family=Noto+Sans+Devanagari:wght@500&family=Noto+Sans+Kannada:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="loader"><div class="loader-star"></div><div class="loader-text">Initialising <span id="load-pct">0</span>%</div></div>
+<canvas id="bg"></canvas>
+<div class="grain"></div>
+<div id="cursor"></div><div id="cursor-dot"></div>
+
+<header class="nav">
+  <a href="#home" class="logo">S<span>A</span></a>
+  <nav>
+    <a href="#about">About</a><a href="#impact">Impact</a><a href="#work">Experience</a><a href="#skills">Stack</a><a href="#contact">Contact</a>
+  </nav>
+  <a class="btn-sm magnetic" href="Syed_Abdulla_Resume.docx" download>Résumé ↓</a>
+</header>
+
+<div class="progress"><span id="progress-bar"></span></div>
+<div class="shape-label" id="shape-label">01 / CONSTELLATION</div>
+
+<main>
+  <!-- HERO -->
+  <section id="home" class="hero" data-shape="text">
+    <div class="greet"><span id="greet">Hello</span></div>
+    <h1 class="title">
+      <span class="line"><span class="reveal">Syed</span></span>
+      <span class="line"><span class="reveal gold">Abdulla</span></span>
+    </h1>
+    <p class="role">Full-Stack Software Engineer <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot</p>
+    <p class="tag">I build <em id="typer"></em><span class="caret">|</span></p>
+    <div class="hero-cta">
+      <a href="#work" class="btn magnetic">View my work</a>
+      <a href="#contact" class="btn ghost magnetic">Let's talk</a>
+    </div>
+    <div class="hero-meta">
+      <span>📍 Bengaluru, India</span><span>🌍 Open to India &amp; GCC roles</span><span>🟢 3+ yrs · insightsoftware</span>
+    </div>
+    <div class="scroll-hint"><span></span>Scroll</div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" data-shape="star">
+    <div class="wrap two">
+      <div>
+        <div class="eyebrow">01 — About</div>
+        <h2>Engineering with <span class="gold">ownership</span>, precision &amp; craft.</h2>
+      </div>
+      <div class="glass">
+        <p>Software Engineer with <b>3+ years</b> specialising in high-performance React architectures and enterprise data visualisation — now full-stack with <b>Spring Boot</b>.</p>
+        <p>I independently own high-impact features end-to-end — from library migrations and UI unifications to WCAG compliance — while maintaining <b>zero-spillover</b> sprint delivery.</p>
+        <div class="badges">
+          <span>🎓 UVCE CSE '23 · CGPA 9.09</span>
+          <span>🏅 Siemens Scholar</span>
+          <span>⭐ Exceeds Expectations ×2</span>
+          <span>🚀 Promoted to SE in 2 yrs</span>
+        </div>
+        <blockquote>“Strong ownership, technical skill, and collaboration.” <cite>— Manager review</cite></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section id="impact" data-shape="wave">
+    <div class="wrap">
+      <div class="eyebrow">02 — Impact in numbers</div>
+      <h2>Results that <span class="gold">ship</span>.</h2>
+      <div class="stats">
+        <div class="stat tilt"><div class="num" data-to="42" data-suf="%">0</div><div class="lbl">Grid bundle reduction (gzipped) after AG-Grid v35 migration</div></div>
+        <div class="stat tilt"><div class="num" data-to="100" data-suf="+">0</div><div class="lbl">Enterprise customers using the Playground I built from scratch</div></div>
+        <div class="stat tilt"><div class="num" data-to="130" data-suf="K+">0</div><div class="lbl">Data points rendered after fixing a line-chart browser crash</div></div>
+        <div class="stat tilt"><div class="num" data-to="90" data-suf="+">0</div><div class="lbl">Bugs fixed · 89 backports across 11 supported releases</div></div>
+        <div class="stat tilt"><div class="num" data-to="40" data-suf="%">0</div><div class="lbl">WCAG compliance uplift — 35+ a11y fixes in one quarter</div></div>
+        <div class="stat tilt"><div class="num" data-to="150" data-suf="+">0</div><div class="lbl">AI-agent commits reviewed · 20+ tickets shipped agentically</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="work" data-shape="grid">
+    <div class="wrap">
+      <div class="eyebrow">03 — Experience</div>
+      <h2>insightsoftware <span class="muted">· Logi Symphony BI</span></h2>
+      <p class="sub">Feb 2023 – Present · Bengaluru · <a href="https://playground.logi-symphony.com" target="_blank" rel="noopener">playground.logi-symphony.com ↗</a></p>
+
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-head"><h3>Software Engineer</h3><span>Sep 2025 – Present</span></div>
+          <div class="cards">
+            <article class="card tilt"><div class="chip">Frontend · Perf</div><h4>AG-Grid Migration v31 → v35</h4><p>Led the enterprise-wide upgrade across 15+ modules. Authored a spike covering 50+ breaking changes and a 17-ticket roadmap; migrated 58 TS files &amp; 30+ custom cell renderers to the modular v35 architecture.</p><div class="kpi">−42% bundle</div></article>
+            <article class="card tilt"><div class="chip">Backend · Security</div><h4>Folder Organisation — Spring Boot</h4><p>JPA entities, REST APIs and 3 folder-scoped roles via a custom Spring Security ACL evaluator. Per-user private folders (~4K LOC): event-driven provisioning, Liquibase backfill, atomic sharing-driven moves.</p><div class="kpi">~4K LOC</div></article>
+            <article class="card tilt"><div class="chip">React · UX</div><h4>Folder Experience — UI</h4><p>Library tree sidebar with breadcrumbs, folder CRUD dialogs with system-folder badges, folder-first navigation and privilege roles.</p><div class="kpi">End-to-end</div></article>
+            <article class="card tilt"><div class="chip">SDK · Embedding</div><h4>Self-Service Report Embedding</h4><p>Single-handedly delivered SSR embedding from spike to docs handover — Embed Manager, SDK events and embed snippets.</p><div class="kpi">Solo delivery</div></article>
+            <article class="card tilt"><div class="chip">Product</div><h4>Symphony Unification &amp; Homepage</h4><p>Spearheaded a task-focused homepage with theming, consolidating 5+ admin workflows into one unified experience.</p><div class="kpi">5+ → 1</div></article>
+            <article class="card tilt"><div class="chip">AI</div><h4>Playground AI &amp; Showcases</h4><p>Integrated the AI chatbot (visual generation, data Q&amp;A, Bot API), pixel-perfect, Crystal Reports &amp; white-labelling showcases; per-branch preview deploys via GitHub Actions.</p><div class="kpi">AI chatbot</div></article>
+            <article class="card tilt"><div class="chip">Accessibility</div><h4>WCAG Compliance</h4><p>Cleared a full quarter of a11y debt — aria-hidden/tabindex conflicts, screen-reader patterns with Blueprint.js across dashboards, source editor &amp; menus.</p><div class="kpi">+40% compliance</div></article>
+            <article class="card tilt"><div class="chip">Reliability</div><h4>Critical IIS 404.11 Fix</h4><p>Diagnosed encoded characters in composite URLs breaking Windows deployments — a fix impacting 100% of Windows-deployed customers.</p><div class="kpi">100% of Win users</div></article>
+            <article class="card tilt"><div class="chip">Delivery</div><h4>Source V2 &amp; Filters</h4><p>Connections tab (tree UI), File tab and right panel for Source V2. Hierarchical Filter Phase 2 &amp; Auto-Apply Filter Panel — zero spillovers across 6+ sprints.</p><div class="kpi">0 spillovers</div></article>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-head"><h3>Associate Software Engineer</h3><span>Jul 2023 – Aug 2025</span></div>
+          <div class="cards">
+            <article class="card tilt"><div class="chip">React + Spring Boot</div><h4>Playground App — from zero</h4><p>Built the customer-facing Playground from the ground up, now used by 100+ enterprise customers for product exploration.</p><div class="kpi">100+ customers</div></article>
+            <article class="card tilt"><div class="chip">Innovation</div><h4>Hackathon Win — “Composer”</h4><p>Led frontend for a new hackathon feature, later approved for the product roadmap.</p><div class="kpi">🏆 Roadmapped</div></article>
+            <article class="card tilt"><div class="chip">Quality · Perf</div><h4>SonarCloud &amp; 130K-point charts</h4><p>Drove SonarCloud High-severity bugs to 0; resolved a browser crash on line charts rendering 130K+ points; fixed K8s/Docker &amp; CentOS/PostgreSQL deploy issues.</p><div class="kpi">0 high-sev</div></article>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-head"><h3>Software Engineering Intern</h3><span>Feb 2023 – Jun 2023</span></div>
+          <div class="cards one">
+            <article class="card tilt"><div class="chip">C# · .NET</div><h4>Logging migration: Raize → Serilog</h4><p>Migrated the product's logging library, improving maintainability.</p></article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills" data-shape="knot">
+    <div class="wrap">
+      <div class="eyebrow">04 — Stack</div>
+      <h2>Tools I <span class="gold">master</span>.</h2>
+      <div class="skill-grid">
+        <div class="skill glass"><h4>Frontend</h4><div class="pills"><i>React.js</i><i>TypeScript</i><i>JavaScript ES6+</i><i>AG-Grid Enterprise</i><i>Blueprint.js</i><i>HTML5</i><i>CSS3</i><i>WCAG / a11y</i></div></div>
+        <div class="skill glass"><h4>Backend</h4><div class="pills"><i>Java</i><i>Spring Boot</i><i>Spring Security ACL</i><i>Spring Data JPA</i><i>Liquibase</i><i>PostgreSQL</i><i>JUnit</i><i>C# .NET</i><i>REST</i><i>Docker</i></div></div>
+        <div class="skill glass"><h4>Infra &amp; Tools</h4><div class="pills"><i>Git</i><i>GitHub Actions</i><i>Jenkins</i><i>Kubernetes</i><i>SonarCloud</i><i>Bitbucket</i><i>Jira</i><i>Confluence</i><i>Agile / Scrum</i></div></div>
+        <div class="skill glass"><h4>AI-First Workflow</h4><div class="pills"><i>Claude Code</i><i>Copilot Agents</i><i>Gemini</i><i>AI Code Review</i></div></div>
+      </div>
+    </div>
+    <div class="marquee"><div class="track">React ✦ TypeScript ✦ Java ✦ Spring Boot ✦ PostgreSQL ✦ AG-Grid ✦ Kubernetes ✦ Docker ✦ GitHub Actions ✦ WCAG ✦ Claude Code ✦ React ✦ TypeScript ✦ Java ✦ Spring Boot ✦ PostgreSQL ✦ AG-Grid ✦ Kubernetes ✦ Docker ✦ GitHub Actions ✦ WCAG ✦ Claude Code ✦ </div></div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section id="edu" data-shape="helix">
+    <div class="wrap two">
+      <div>
+        <div class="eyebrow">05 — Education &amp; Recognition</div>
+        <h2>Academic <span class="gold">excellence</span>.</h2>
+        <p class="sub">B.Tech, Computer Science &amp; Engineering<br/>University Visvesvaraya College of Engineering (UVCE), Bengaluru · 2019 – 2023</p>
+      </div>
+      <div class="edu-rings">
+        <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" data-p="90.9"/></svg><b>9.09</b><span>CGPA</span></div>
+        <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" data-p="96.16"/></svg><b>96.16%</b><span>Class 12</span></div>
+        <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" data-p="96.48"/></svg><b>96.48%</b><span>Class 10</span></div>
+        <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52"/><circle class="fill" cx="60" cy="60" r="52" data-p="100"/></svg><b>Full</b><span>Siemens Scholarship</span></div>
+      </div>
+    </div>
+    <div class="wrap langs">
+      <span><b>English</b> Professional</span><span><b class="deva">हिन्दी</b> Professional</span><span><b class="kan">ಕನ್ನಡ</b> Native</span><span><b>తెలుగు</b> Conversational</span>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" data-shape="globe">
+    <div class="wrap center">
+      <div class="eyebrow">06 — Contact</div>
+      <h2 class="big">Let's build something<br/><span class="gold">remarkable</span>.</h2>
+      <p class="sub">From Bengaluru to Dubai, Riyadh, Doha &amp; beyond — I'm open to conversations about full-stack and frontend-heavy roles.</p>
+      <div class="contact-row">
+        <a class="btn magnetic" href="mailto:syedabdulla761@gmail.com">✉ syedabdulla761@gmail.com</a>
+        <a class="btn ghost magnetic" href="https://wa.me/918867618049" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn ghost magnetic" href="tel:+918867618049">+91 88676 18049</a>
+        <a class="btn ghost magnetic" href="https://github.com/syedabdulla761" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <div class="clocks">
+        <div><span data-tz="Asia/Kolkata">--:--</span><small>Bengaluru</small></div>
+        <div><span data-tz="Asia/Dubai">--:--</span><small>Dubai</small></div>
+        <div><span data-tz="Asia/Riyadh">--:--</span><small>Riyadh</small></div>
+        <div><span data-tz="Asia/Qatar">--:--</span><small>Doha</small></div>
+      </div>
+    </div>
+    <footer>© <span id="yr"></span> Syed Abdulla · Built with Three.js &amp; vanilla JS · Press <kbd>~</kbd> for a terminal</footer>
+  </section>
+</main>
+
+<!-- Terminal easter egg -->
+<div id="term" aria-hidden="true">
+  <div class="term-bar"><i></i><i></i><i></i><span>syed@portfolio: ~</span><button id="term-x" aria-label="Close">×</button></div>
+  <div id="term-out"></div>
+  <div class="term-in"><span>❯</span><input id="term-input" autocomplete="off" spellcheck="false" placeholder="type 'help'" /></div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
