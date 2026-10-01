@@ -40,7 +40,7 @@ Read this whole file before changing anything. It records what was built, why, w
 | `style.css` | All styles; tokens in `:root`; Arabic/RTL rules under `html[lang=ar]` / `[dir=rtl]` |
 | `main.js` (ES module) | Three.js scene: 16K particles desktop / 12K mobile morphing between shapes per section, bloom (UnrealBloomPass), gestures (tap = shockwave, hold = black hole, drag = orbit), gyro parallax, WebAudio sound (harp strum, scroll filter, rumble), reveals/counters/scramble, Lenis, i18n (`AR_SRC`), ⌘K palette (`ACTIONS`), cursor. Exposes `window.SA` (event bus `SA.emit/on`, `tone/pluck/boom`, `setShape`, `shockwave`, `scrollTo`, `actions`, `toast`, …) |
 | `extras.js` (module, loads after main) | Live tiles (IST clock/status, Open-Meteo weather, visitor-timezone overlap, career counter), holographic card (drag/flick spin, QR via `qrcode-generator`), exploration game (8 hidden bugs on real content + 14 achievements, progress in `localStorage` key `sa-progress-v1`), Playground screen carousel |
-| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v8`) on every deploy.** |
+| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v9`) on every deploy.** |
 | `img/` | Playground screenshots (WebP) + `playground-themes.gif` (theme-switching capture) |
 | `Syed_Abdulla_Resume.pdf/.docx` | Résumé served by the site (generated from v14, see §6) |
 | `Syed_Abdulla.vcf`, `manifest.webmanifest`, `icon-*.png`, `favicon.svg`, `og.png` | Contact card, PWA, icons, link preview |
@@ -52,6 +52,7 @@ CDN deps: three@0.160.0 (import map, plus `three/addons/`), lenis@1.1.13, qrcode
 - Renderer clear colour and fog must be **`0x000000`**: with OutputPass the sRGB conversion turned `#06070b` slate-grey.
 - Camera parallax vector `mouse` defaults to **(0,0)**; the interaction vector `aim` uses (9,9) as "off". A (9,9) default skews the camera on phones.
 - Mobile "SA" monogram is fitted into the gap between the nav and `.greet` (`textShape` in main.js) so it never covers the name. Re-check this if the hero layout changes.
+- On phones that monogram uses only `LETTERS = 0.42` of the particles (spares drift into the fog), and while the hero shape is active the bloom drops to 0.4 and point size to 70% (`heroCalm` in the tick). Without this the small, dense letters blow out into unreadable glare.
 - Mobile bloom runs at pixel ratio 1 and auto-disables if FPS < 34 for 2s.
 - i18n: `AR_SRC` targets **leaf elements** so live values (clocks, counters, hidden bugs) survive the innerHTML swap. Spans like `.i-you`, `.i-since`, `#tag-pre` exist for that reason. `en` HTML is captured at load.
 - Shared `const` names: `main.js` has a module-level `let scrollY` — use `window.scrollY` inside functions.

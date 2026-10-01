@@ -42,6 +42,8 @@ if (window.Lenis && !reducedMotion && !touchDev) {
 const scrollToEl = el => lenis ? lenis.scrollTo(el, { duration: 1.2 }) : el.scrollIntoView({ behavior: 'smooth' });
 
 // ---- Shape generators (each returns Float32Array N*3) ----
+// Phones squeeze the monogram into a small gap, so it uses far fewer particles to stay legible
+const LETTERS = isMobile ? 0.42 : 0.82;
 function textShape(str) {
   const c = document.createElement('canvas'), W = 1024, H = 360;
   c.width = W; c.height = H;
@@ -54,7 +56,7 @@ function textShape(str) {
   const out = new Float32Array(N * 3);
   const count = pts.length / 2;
   for (let i = 0; i < N; i++) {
-    if (count && i < N * 0.82) {
+    if (count && i < N * LETTERS) {
       const k = (Math.random() * count | 0) * 2;
       out[i * 3] = (pts[k] - W / 2) / 34 + (isMobile ? 0 : 6);
       out[i * 3 + 1] = -(pts[k + 1] - H / 2) / 34;
@@ -67,7 +69,7 @@ function textShape(str) {
   if (isMobile) {
     // Phones: fit the monogram into the empty band between the nav bar and the greeting,
     // so at rest it never sits on top of the name (swipes / tilt can still scatter it).
-    const L = Math.floor(N * 0.82);
+    const L = Math.floor(N * LETTERS);
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (let i = 0; i < L; i++) { const x = out[i * 3], y = out[i * 3 + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
     const upp = Math.tan(camera.fov * Math.PI / 360) * camera.position.z / (innerHeight / 2); // world units per CSS px at z = 0
@@ -78,7 +80,7 @@ function textShape(str) {
     const cy = (innerHeight / 2 - (top + band / 2)) * upp, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
     for (let i = 0; i < N; i++) {
       if (i < L) { out[i * 3] = (out[i * 3] - mx) * s; out[i * 3 + 1] = (out[i * 3 + 1] - my) * s + cy; out[i * 3 + 2] *= s; }
-      else { out[i * 3] *= 0.45; out[i * 3 + 1] *= 0.45; }
+      else { out[i * 3] *= 1.6; out[i * 3 + 1] *= 1.6; out[i * 3 + 2] = rand(-75, -40); } // spare particles drift far back into the fog
     }
   }
   return out;
@@ -215,9 +217,10 @@ geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 geo.setAttribute('seed', new THREE.BufferAttribute(seeds, 1));
 geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
 
+const BASE_SIZE = (isMobile ? 46 : 44) * renderer.getPixelRatio();
 const mat = new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
-  uniforms: { uTime: { value: 0 }, uSize: { value: (isMobile ? 46 : 44) * renderer.getPixelRatio() } },
+  uniforms: { uTime: { value: 0 }, uSize: { value: BASE_SIZE } },
   vertexShader: `
     attribute float seed; varying vec3 vColor; varying float vA; uniform float uTime; uniform float uSize;
     void main(){
@@ -283,7 +286,10 @@ function tick() {
   // long-press on empty space → black hole
   if (press && !holing && press.moved < 12 && now - press.t > 380) { holing = true; navigator.vibrate?.(15); }
   hole = holing ? Math.min(hole + 0.012, 1) : Math.max(hole - 0.06, 0);
-  if (bloomPass) bloomPass.strength = BLOOM + hole * 0.9 + burst * 0.5;
+  // phones: the small hero monogram gets softer glow + finer points so the letters stay legible
+  const heroCalm = isMobile && currentKey === 'text';
+  if (bloomPass) bloomPass.strength = (heroCalm ? 0.4 : BLOOM) + hole * 0.9 + burst * 0.5;
+  mat.uniforms.uSize.value += (BASE_SIZE * (heroCalm ? 0.7 : 1) - mat.uniforms.uSize.value) * 0.05;
   SA.onHole?.(hole);
 
   ray.setFromCamera(aim, camera);
