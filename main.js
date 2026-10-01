@@ -64,7 +64,23 @@ function textShape(str) {
       out[i * 3] = Math.cos(t) * r; out[i * 3 + 1] = rand(-12, 12); out[i * 3 + 2] = Math.sin(t) * r - 10;
     }
   }
-  if (isMobile) for (let i = 0; i < N; i++) { out[i * 3] *= 0.45; out[i * 3 + 1] = out[i * 3 + 1] * 0.45 + 5; }
+  if (isMobile) {
+    // Phones: fit the monogram into the empty band between the nav bar and the greeting,
+    // so at rest it never sits on top of the name (swipes / tilt can still scatter it).
+    const L = Math.floor(N * 0.82);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < L; i++) { const x = out[i * 3], y = out[i * 3 + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    const upp = Math.tan(camera.fov * Math.PI / 360) * camera.position.z / (innerHeight / 2); // world units per CSS px at z = 0
+    const top = document.querySelector('.nav').getBoundingClientRect().bottom + 8;
+    const bot = document.querySelector('.greet').getBoundingClientRect().top + window.scrollY - 8;
+    const band = Math.max(bot - top, 40);
+    const s = Math.min(band * 0.85 * upp / (y1 - y0), innerWidth * 0.55 * upp / (x1 - x0));
+    const cy = (innerHeight / 2 - (top + band / 2)) * upp, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    for (let i = 0; i < N; i++) {
+      if (i < L) { out[i * 3] = (out[i * 3] - mx) * s; out[i * 3 + 1] = (out[i * 3 + 1] - my) * s + cy; out[i * 3 + 2] *= s; }
+      else { out[i * 3] *= 0.45; out[i * 3 + 1] *= 0.45; }
+    }
+  }
   return out;
 }
 
