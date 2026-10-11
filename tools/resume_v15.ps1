@@ -32,7 +32,7 @@ try {
 
     # 1) Summary: lead with the strongest proof points
     Swap 'Software Engineer with 3+ years of experience specializing in high-performance React architectures and enterprise data visualization, now full-stack with Spring Boot.' 'Full-stack Software Engineer with 3+ years building Simba, insightsoftware''s enterprise embedded-analytics platform, across React/TypeScript front ends and Spring Boot services.'
-    Swap 'Independently owns high-impact features end-to-end — from library migrations and UI unifications to WCAG compliance — while maintaining zero-spillover sprint delivery.' 'Built the public Playground (playground.simba.com) from scratch, led the AG-Grid v35 migration (−42% bundle) and has closed 305 Jira tickets with zero sprint spillover.'
+    Swap 'Independently owns high-impact features end-to-end — from library migrations and UI unifications to WCAG compliance — while maintaining zero-spillover sprint delivery.' 'Owns the public Playground (playground.simba.com) end-to-end, led the AG-Grid v35 migration (−42% bundle) and has closed 305 Jira tickets with zero sprint spillover.'
     Style '3+ years' $true $null
     Style 'zero sprint spillover' $true $null
 
@@ -48,6 +48,10 @@ try {
     Swap 'Folder Organization – Backend:' 'Folder Organization (Full-Stack):'
     Swap 'admin preview/execute migration, atomic sharing-driven moves.' 'admin preview/execute migration, atomic sharing-driven moves; plus the React Library tree, breadcrumbs and folder dialogs.'
     foreach ($p in $d.Paragraphs) { if ($p.Range.Text -like 'Folder Organization – UI:*') { $p.Range.Delete(); break } }
+
+    # 3b) Precise verbs: the Playground is owned end-to-end (not solo-built from zero); folders were implemented, design was shared
+    Swap 'Built the public Playground (React + Spring Boot) from the ground up, publicly deployed' 'Own the public Playground (React + Spring Boot) end-to-end, publicly deployed'
+    Swap 'Designed per-user private folders' 'Implemented per-user private folders'
 
     # 4) Cut filler
     Swap ' Key contributor to the broader product unification initiative.' ''
@@ -79,6 +83,7 @@ try {
     if ($variant -eq 'GCC') {
       # Photo-left header: name / title / contact sit to the right of a round headshot
       Swap 'Software Engineer  |  Full-Stack  |  React · TypeScript · Java · Spring Boot' 'Full-Stack Software Engineer  |  React · TypeScript · Java · Spring Boot  |  Open to GCC relocation'
+      Swap '+91 88676 18049' '+91 88676 18049 (WhatsApp)'
       $size = 66; $gap = 12
       $h = $d.Range($d.Paragraphs(1).Range.Start, $d.Paragraphs(3).Range.End)
       $h.ParagraphFormat.Alignment = 0

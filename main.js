@@ -698,9 +698,9 @@ const AR_SRC = [
     'commit من AI agents تمت مراجعتها · أكثر من 20 مهمة سُلّمت بـ agentic workflows']],
   // featured work
   ['#playground .eyebrow', '✦ عمل مميز'],
-  ['#playground h2', 'منصة <span class="gold">Playground</span> — بنيتها من الصفر، ومتاحة للعالم.'],
+  ['#playground h2', 'منصة <span class="gold">Playground</span> — أتولاها من البداية إلى النهاية، ومتاحة للعالم.'],
   ['#playground .case-lead', 'بيئة التجربة العامة لمنتج embedded analytics من insightsoftware — حيث تجرّب آلاف الشركات من العملاء والمهتمين المنتج، وتحصل على embed code جاهز، وترى الـ white-labelling مباشرة.'],
-  ['#playground .case-points li', ['<b>بنيتها من الصفر</b> — React للواجهة و Spring Boot للـ backend.', '<b>منشورة ومسوَّقة للعامة</b> حول العالم.', 'Embed options و interactivity profiles و UI themes و cross-visual filtering و Embed API و event listeners.', 'AI chatbot، وعروض pixel-perfect و Crystal Reports، و preview deploy لكل branch عبر GitHub Actions.']],
+  ['#playground .case-points li', ['<b>أتولاها من البداية إلى النهاية</b> — React للواجهة و Spring Boot للـ backend.', '<b>منشورة ومسوَّقة للعامة</b> حول العالم.', 'Embed options و interactivity profiles و UI themes و cross-visual filtering و Embed API و event listeners.', 'AI chatbot، وعروض pixel-perfect و Crystal Reports، و preview deploy لكل branch عبر GitHub Actions.']],
   ['#playground .case-tabs button', ['الترحيب', 'تغيير الثيم مباشرة', 'التفاعل', 'Cross-filtering', 'Embed API']],
   ['#playground .case-copy > .btn', 'استكشفها مباشرة ↗'],
   // experience
@@ -712,7 +712,7 @@ const AR_SRC = [
     'ترقية AG-Grid من v31 إلى v35', 'تنظيم المجلدات — Backend', 'تنظيم المجلدات — واجهة المستخدم',
     'Self-Service Report Embedding', 'توحيد المنصة والصفحة الرئيسية', 'Playground AI والعروض التوضيحية',
     'إمكانية الوصول (WCAG)', 'إصلاح حرج لخطأ IIS 404.11', 'Source V2 والفلاتر',
-    'تطبيق Playground — من الصفر', 'فوز في الهاكاثون — «Composer»', 'SonarCloud و charts بـ 130 ألف نقطة',
+    'تطبيق Playground — من البداية إلى النهاية', 'فوز في الهاكاثون — «Composer»', 'SonarCloud و charts بـ 130 ألف نقطة',
     'Logging: من Raize إلى Serilog']],
   ['#work .card p', [
     'قدت ترقية مكتبة الـ grid في أكثر من 15 module. كتبت spike document يغطي أكثر من 50 breaking change مع roadmap من 17 مهمة، ونقلت 58 ملف TypeScript وأكثر من 30 custom cell renderer إلى بنية v35 الجديدة.',
@@ -724,7 +724,7 @@ const AR_SRC = [
     'أنهيت ديون إمكانية الوصول لربع سنة كامل (أكثر من 35 إصلاحًا) — مشاكل aria-hidden و tabindex، ودعم قارئ الشاشة باستخدام Blueprint.js في الـ dashboards والقوائم.',
     'اكتشفت أن encoded characters في الـ URLs كانت تعطّل النشر على Windows — إصلاح أثّر على 100% من عملاء Windows.',
     'Connections tab و File tab والـ right panel لـ Source V2. وسلّمت Hierarchical Filter و Auto-Apply Filter Panel دون أي تأخير عبر أكثر من 6 sprints.',
-    'بنيت منصة Playground العامة من الصفر — منشورة ومسوَّقة عالميًا كبيئة لتجربة المنتج لآلاف الشركات من عملاء insightsoftware.',
+    'أتولى منصة Playground العامة من البداية إلى النهاية — منشورة ومسوَّقة عالميًا كبيئة لتجربة المنتج لآلاف الشركات من عملاء insightsoftware.',
     'قدت تطوير الـ frontend لميزة جديدة في الهاكاثون، واعتُمدت لاحقًا ضمن خطة المنتج.',
     'خفّضت أخطاء SonarCloud عالية الخطورة إلى الصفر، وأصلحت تعطّل المتصفح في charts تعرض أكثر من 130 ألف نقطة، وحللت مشاكل النشر في K8s/Docker و CentOS/PostgreSQL.',
     'نقلت مكتبة الـ logging في المنتج إلى Serilog، مما سهّل الصيانة.']],
@@ -765,7 +765,7 @@ const AR_SRC = [
   ['#quick dd', [
     'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
     'Enterprise BI و embedded analytics — Simba (سابقًا Logi Symphony)',
-    'بنيت منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
+    'أتولى منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
     'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند والشرق الأوسط (الخليج)',
     'فترة الإشعار 60 يومًا · هندي الجنسية بجواز سفر ساري · مستعد للانتقال بتأشيرة عمل يكفلها صاحب العمل']],

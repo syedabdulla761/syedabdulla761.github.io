@@ -21,12 +21,12 @@ Read this whole file before changing anything. It records what was built, why, w
 - **The exploration game is desktop-only** (`GAME` flag in extras.js → `html.no-game` hides HUD, toasts, hidden bugs and the exploration tile on phones/touch). Phones were too cluttered with it.
 - **Feature-light over feature-heavy.** Already removed: hidden terminal, "stats for nerds" + "last deployed" tiles, vertical shape label, separate bug-squash mini-game, card flip button.
 - **Arabic is optional** — keep everyday Arabic; keep industry terms (backports, sprints, breaking changes, Frontend/Backend, job titles, product names) in **English**. Don't use dictionary coinages.
-- Be accurate about claims; numbers below are the source of truth.
+- Be accurate about claims; numbers below are the source of truth. Verbs matter for reference checks: "own end-to-end" for the Playground, "implemented" (not "designed") for per-user private folders. The −42% bundle figure is a measured local comparison — keep it.
 
 ## 3. Content facts (source of truth)
 
 - Product renamed **Logi Symphony → Simba** (Sept 2026, launched). Write "Simba (formerly Logi Symphony)" where context helps.
-- **Playground** (Syed built it from the ground up, React + Spring Boot) is **public and marketed worldwide** at **https://playground.simba.com/** — the product sandbox for insightsoftware's *thousands of client companies*. Never say "100+ customers".
+- **Playground** (Syed **owns it end-to-end**, React + Spring Boot — NOT "built from scratch/ground up/zero": others worked on it too) is **public and marketed worldwide** at **https://playground.simba.com/** — the product sandbox for insightsoftware's *thousands of client companies*. Never say "100+ customers".
 - Jira (insightsoftware.atlassian.net, as of 2026-10-01): **305 tickets done** — **95 bugs**, 95 stories/tasks/features, **4 spikes** (AG-Grid v31→v35 upgrade, SSR embedding R&D, per-user private folders migration, a customer Time Bar Slider investigation — never publish customer names).
 - Dates: intern hire **2023-02-20**, full-time **2023-07-24**. Career counter starts 2023-02-20.
 - Other metrics: −42% grid bundle, 130K-point chart crash fix, 89 backports / 11 releases, +40% WCAG, 150+ agent commits reviewed, 0 sprint spillovers, CGPA 9.09, Siemens Scholar, 12th 96.16%, 10th 96.48%, "Exceeds Expectations" 2025 & 2026.
@@ -42,7 +42,7 @@ Read this whole file before changing anything. It records what was built, why, w
 | `style.css` | All styles; tokens in `:root`; Arabic/RTL rules under `html[lang=ar]` / `[dir=rtl]` |
 | `main.js` (ES module) | Three.js scene: 16K particles desktop / 12K mobile morphing between shapes per section, bloom (UnrealBloomPass), gestures (tap = shockwave, hold = black hole, drag = orbit), gyro parallax, WebAudio sound (harp strum, scroll filter, rumble), reveals/counters/scramble, Lenis, i18n (`AR_SRC`), ⌘K palette (`ACTIONS`), cursor. Exposes `window.SA` (event bus `SA.emit/on`, `tone/pluck/boom`, `setShape`, `shockwave`, `scrollTo`, `actions`, `toast`, …) |
 | `extras.js` (module, loads after main) | Live tiles (IST clock/status, Open-Meteo weather, visitor-timezone overlap, career counter), holographic card (drag/flick spin, QR via `qrcode-generator`), exploration game (8 hidden bugs on real content + 14 achievements, progress in `localStorage` key `sa-progress-v1`), Playground screen carousel |
-| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v11`) on every deploy.** |
+| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v12`) on every deploy.** |
 | `img/` | Playground screenshots (WebP), `playground-themes.gif`, headshot `syed.webp/.jpg` (square) + `syed-round.png` (résumé). Source photos (`mypicproff.png` = chosen, blazer; `OrigPic.jpg`) are git-ignored and stay local |
 | `Syed_Abdulla_Resume.pdf/.docx` | Résumé served by the site (generated from v14, see §6) |
 | `Syed_Abdulla.vcf`, `manifest.webmanifest`, `icon-*.png`, `favicon.svg`, `og.png` | Contact card, PWA, icons, link preview |
