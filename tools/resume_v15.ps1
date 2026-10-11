@@ -30,8 +30,11 @@ try {
     # metric emphasis style used throughout the résumé (bold + accent colour)
     $m = $d.Content; $null = $m.Find.Execute('15+ modules'); $accent = $m.Font.Color
 
+    # 0) Positioning: frontend specialist who works across the stack (backend work is recent)
+    if ($variant -ne 'GCC') { Swap 'Software Engineer  |  Full-Stack  |  React · TypeScript · Java · Spring Boot' 'Software Engineer  |  Frontend (React · TypeScript)  |  Full-Stack with Spring Boot' }
+
     # 1) Summary: lead with the strongest proof points
-    Swap 'Software Engineer with 3+ years of experience specializing in high-performance React architectures and enterprise data visualization, now full-stack with Spring Boot.' 'Full-stack Software Engineer with 3+ years building Simba, insightsoftware''s enterprise embedded-analytics platform, across React/TypeScript front ends and Spring Boot services.'
+    Swap 'Software Engineer with 3+ years of experience specializing in high-performance React architectures and enterprise data visualization, now full-stack with Spring Boot.' 'Frontend-focused Software Engineer with 3+ years building Simba, insightsoftware''s enterprise embedded-analytics platform: React/TypeScript architecture, data-heavy AG-Grid UIs and WCAG accessibility, with hands-on Spring Boot backend experience.'
     Swap 'Independently owns high-impact features end-to-end — from library migrations and UI unifications to WCAG compliance — while maintaining zero-spillover sprint delivery.' 'Owns the public Playground (playground.simba.com) end-to-end, led the AG-Grid v35 migration (−42% bundle) and has closed 305 Jira tickets with zero sprint spillover.'
     Style '3+ years' $true $null
     Style 'zero sprint spillover' $true $null
@@ -82,7 +85,7 @@ try {
 
     if ($variant -eq 'GCC') {
       # Photo-left header: name / title / contact sit to the right of a round headshot
-      Swap 'Software Engineer  |  Full-Stack  |  React · TypeScript · Java · Spring Boot' 'Full-Stack Software Engineer  |  React · TypeScript · Java · Spring Boot  |  Open to GCC relocation'
+      Swap 'Software Engineer  |  Full-Stack  |  React · TypeScript · Java · Spring Boot' 'Software Engineer  |  Frontend (React · TypeScript) · Full-Stack  |  Open to GCC relocation'
       Swap '+91 88676 18049' '+91 88676 18049 (WhatsApp)'
       $size = 66; $gap = 12
       $h = $d.Range($d.Paragraphs(1).Range.Start, $d.Paragraphs(3).Range.End)

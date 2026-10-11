@@ -12,6 +12,7 @@ Read this whole file before changing anything. It records what was built, why, w
 - **Audience:** tech hirers in **India and the Middle East / GCC** (Dubai, Riyadh, Doha). Syed is open to roles in both.
 - **Goal:** a portfolio that is *memorable* (a layman should enjoy exploring it) **and** *recruiter-practical* (facts, résumé, contact in seconds).
 - **Look:** dark cosmic theme — near-black background, gold `#e8b04b` / ivory / teal `#2dd4bf` accents, glowing Three.js particles with bloom. The **8-pointed Khatam star** (two rotated squares) is the recurring motif: favicon, loader, cursor, card watermark, a particle shape. Nods to Indian + Islamic geometric art.
+- **Positioning: frontend specialist who works across the stack** (decided 2026-10-12). Lead with React/TypeScript, AG-Grid, accessibility; mention Spring Boot as "full-stack with Spring Boot" / "hands-on backend experience". Don't put Java/Spring Boot in headlines — backend work is recent and largely agent-assisted, and backend-led headlines route him to backend-depth interviews. Keep the Backend skills line and the folder bullet.
 - **Tone:** confident, metric-led. The résumé's real numbers carry the site.
 
 ## 2. Hard-won preferences (follow these)
@@ -42,7 +43,7 @@ Read this whole file before changing anything. It records what was built, why, w
 | `style.css` | All styles; tokens in `:root`; Arabic/RTL rules under `html[lang=ar]` / `[dir=rtl]` |
 | `main.js` (ES module) | Three.js scene: 16K particles desktop / 12K mobile morphing between shapes per section, bloom (UnrealBloomPass), gestures (tap = shockwave, hold = black hole, drag = orbit), gyro parallax, WebAudio sound (harp strum, scroll filter, rumble), reveals/counters/scramble, Lenis, i18n (`AR_SRC`), ⌘K palette (`ACTIONS`), cursor. Exposes `window.SA` (event bus `SA.emit/on`, `tone/pluck/boom`, `setShape`, `shockwave`, `scrollTo`, `actions`, `toast`, …) |
 | `extras.js` (module, loads after main) | Live tiles (IST clock/status, Open-Meteo weather, visitor-timezone overlap, career counter), holographic card (drag/flick spin, QR via `qrcode-generator`), exploration game (8 hidden bugs on real content + 14 achievements, progress in `localStorage` key `sa-progress-v1`), Playground screen carousel |
-| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v12`) on every deploy.** |
+| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v13`) on every deploy.** |
 | `img/` | Playground screenshots (WebP), `playground-themes.gif`, headshot `syed.webp/.jpg` (square) + `syed-round.png` (résumé). Source photos (`mypicproff.png` = chosen, blazer; `OrigPic.jpg`) are git-ignored and stay local |
 | `Syed_Abdulla_Resume.pdf/.docx` | Résumé served by the site (generated from v14, see §6) |
 | `Syed_Abdulla.vcf`, `manifest.webmanifest`, `icon-*.png`, `favicon.svg`, `og.png` | Contact card, PWA, icons, link preview |

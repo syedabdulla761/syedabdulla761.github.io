@@ -673,7 +673,7 @@ const AR_SRC = [
   ['.nav nav a[href="#about"]', 'نبذة عني'], ['.nav nav a[href="#impact"]', 'الإنجازات'], ['.nav nav a[href="#playground"]', 'Playground'], ['.nav nav a[href="#work"]', 'الخبرات'],
   ['.nav nav a[href="#skills"]', 'المهارات'], ['.nav nav a[href="#live"]', 'مباشر'], ['.nav nav a[href="#contact"]', 'تواصل'], ['#cv', 'السيرة الذاتية ↓'],
   // hero
-  ['.role', 'مهندس برمجيات Full-Stack <b>·</b> React <b>·</b> TypeScript <b>·</b> Java <b>·</b> Spring Boot'],
+  ['.role', 'مهندس برمجيات Frontend <b>·</b> React <b>·</b> TypeScript <b>·</b> Full-Stack مع Spring Boot'],
   ['#tag-pre', 'أبني'],
   ['.hero-cta a[href="#work"]', 'استعرض أعمالي'], ['.hero-cta a[href="#contact"]', 'لنتحدث'], ['#quick-btn', '⚡ ملخص في 30 ثانية'],
   ['.hero-meta', '<span>📍 بنغالورو، الهند</span><span>🌍 منفتح على فرص العمل في الهند والشرق الأوسط</span><span>🟢 أكثر من 3 سنوات · insightsoftware</span>'],
@@ -682,7 +682,7 @@ const AR_SRC = [
   ['#about .eyebrow', '01 — نبذة عني'],
   ['#about h2', 'هندسة برمجيات بروح <span class="gold">المسؤولية</span> والدقة والإتقان.'],
   ['#about .glass > p', [
-    'مهندس برمجيات بخبرة تزيد على <b>3 سنوات</b>، متخصص في تطبيقات React عالية الأداء و Data Visualization للمؤسسات — وأعمل الآن على الـ Full-Stack مع <b>Spring Boot</b>.',
+    'مهندس برمجيات بخبرة تزيد على <b>3 سنوات</b>، متخصص في تطبيقات React عالية الأداء والواجهات الغنية بالبيانات وإمكانية الوصول — مع خبرة عملية في الـ backend باستخدام <b>Spring Boot</b>.',
     'أتولى الميزات المهمة بنفسي من البداية إلى النهاية — من ترقية المكتبات وتوحيد الواجهات إلى معايير WCAG — مع تسليم كل sprint في موعده <b>دون أي تأخير</b>.']],
   ['#about .badges span', ['🎓 UVCE علوم الحاسب 2023 · المعدل 9.09', '🏅 منحة سيمنس', '⭐ «يفوق التوقعات» مرتين', '🚀 ترقية إلى Software Engineer خلال عامين']],
   ['#about blockquote', '«ملكية حقيقية للعمل، ومهارة تقنية، وروح تعاون.» <cite>— تقييم المدير</cite>'],
@@ -751,7 +751,7 @@ const AR_SRC = [
   // contact
   ['#contact .eyebrow', '07 — تواصل'],
   ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
-  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص العمل في Frontend و Full-Stack.'],
+  ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص العمل في Frontend و Full-Stack التي يغلب عليها الـ Frontend.'],
   ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.hc-scan', 'امسح لحفظ جهة الاتصال'], ['.hc-url', 'الاسم · الهاتف · البريد · LinkedIn — مباشرة إلى هاتفك'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
   ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
   ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
@@ -760,10 +760,10 @@ const AR_SRC = [
   ['.dock a', ['<span>⌂</span>الرئيسية', '<span>◉</span>مباشر', '<span>▤</span>الخبرات', '<span>✉</span>تواصل']], ['#dock-k', '<span>⌘</span>القائمة'],
   ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة</span>'],
   // 30-second summary
-  ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'Full-Stack Software Engineer · insightsoftware'],
+  ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'Frontend Software Engineer · insightsoftware'],
   ['#quick dt', ['الخبرة', 'التقنيات', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع', 'الجاهزية']],
   ['#quick dd', [
-    'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
+    'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، AG-Grid، WCAG · الـ backend: Java، Spring Boot، PostgreSQL',
     'Enterprise BI و embedded analytics — Simba (سابقًا Logi Symphony)',
     'أتولى منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',

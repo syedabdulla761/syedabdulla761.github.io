@@ -2,7 +2,7 @@ BEGIN:VCARD
 VERSION:3.0
 N:Abdulla;Syed;;;
 FN:Syed Abdulla
-TITLE:Full-Stack Software Engineer
+TITLE:Frontend Software Engineer
 ORG:insightsoftware
 TEL;TYPE=CELL:+918867618049
 EMAIL;TYPE=INTERNET:syedabdulla761@gmail.com
@@ -11,5 +11,5 @@ X-SOCIALPROFILE;TYPE=linkedin:https://www.linkedin.com/in/syed-abdulla-6467311b6
 item1.URL:https://www.linkedin.com/in/syed-abdulla-6467311b6/
 item1.X-ABLabel:LinkedIn
 ADR;TYPE=WORK:;;;Bengaluru;Karnataka;;India
-NOTE:Full-Stack Software Engineer · React · TypeScript · Java · Spring Boot
+NOTE:Frontend Software Engineer · React · TypeScript · full-stack with Spring Boot
 END:VCARD
