@@ -24,6 +24,8 @@ Read this whole file before changing anything. It records what was built, why, w
 - **Arabic is optional** — keep everyday Arabic; keep industry terms (backports, sprints, breaking changes, Frontend/Backend, job titles, product names) in **English**. Don't use dictionary coinages.
 - Be accurate about claims; numbers below are the source of truth. Verbs matter for reference checks: "own end-to-end" for the Playground, "implemented" (not "designed") for per-user private folders. The −42% bundle figure is a measured local comparison — keep it.
 
+- **Visibility:** the site is intentionally **unpublicised** until Syed starts job hunting — it may stay openly job-ready (open-to-roles lines, GCC résumé download with passport/notice, Playground case study). His **LinkedIn stays quiet** (no portfolio link, no Playground, no "open to roles") until then. Don't re-raise this.
+
 ## 3. Content facts (source of truth)
 
 - Product renamed **Logi Symphony → Simba** (Sept 2026, launched). Write "Simba (formerly Logi Symphony)" where context helps.
