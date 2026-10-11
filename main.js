@@ -752,7 +752,7 @@ const AR_SRC = [
   ['#contact .eyebrow', '07 — تواصل'],
   ['#contact h2', 'لنبنِ معًا شيئًا<br/><span class="gold">استثنائيًا</span>.'],
   ['#contact .sub', 'من بنغالورو إلى دبي والرياض والدوحة وما بعدها — منفتح على فرص العمل في Frontend و Full-Stack.'],
-  ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
+  ['.holo-hint', '↔ اسحب البطاقة لتدويرها · اضغط لقلبها'], ['.hc-scan', 'امسح لحفظ جهة الاتصال'], ['.hc-url', 'الاسم · الهاتف · البريد · LinkedIn — مباشرة إلى هاتفك'], ['.holo-actions a', '📇 حفظ جهة الاتصال'],
   ['.contact-row a[href^="https://wa.me"]', 'واتساب'],
   ['.clocks small', ['بنغالورو', 'دبي', 'الرياض', 'الدوحة']],
   ['footer', `© ${new Date().getFullYear()} سيد عبدالله · Three.js و JavaScript · <a href="https://github.com/syedabdulla761/syedabdulla761.github.io" target="_blank" rel="noopener">الكود المصدري ↗</a> · <span class="desk">اضغط على مساحة فارغة لموجة صادمة · <kbd>⌘K</kbd> للأوامر</span><span class="touch">اضغط على مساحة فارغة لموجة صادمة · حرّك هاتفك</span>`],
@@ -761,13 +761,14 @@ const AR_SRC = [
   ['#ghint', '<span class="desk">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة · 🔇 شغّل <b>الصوت</b> للعزف</span><span class="touch">✦ <b>اسحب</b> للتدوير · <b>اضغط مطوّلًا</b> لثقب أسود · <b>اضغط</b> لموجة صادمة</span>'],
   // 30-second summary
   ['#quick .eyebrow', '⚡ ملخص في 30 ثانية'], ['#quick .q-role', 'Full-Stack Software Engineer · insightsoftware'],
-  ['#quick dt', ['الخبرة', 'التقنيات', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع']],
+  ['#quick dt', ['الخبرة', 'التقنيات', 'المجال', 'أبرز الإنجازات', 'التعليم', 'التقييمات', 'اللغات', 'الموقع', 'الجاهزية']],
   ['#quick dd', [
     'أكثر من 3 سنوات (فبراير 2023 – الآن) · ترقية خلال عامين', 'React، TypeScript، Java، Spring Boot، PostgreSQL',
     'Enterprise BI و embedded analytics — Simba (سابقًا Logi Symphony)',
     'بنيت منصة Playground العامة (playground.simba.com) · تقليص الـ grid bundle بنسبة 42% · 305 تذكرة Jira (95 خطأ، 4 spikes) · تحسين WCAG بنسبة 40% · تسليم كل sprint دون تأخير',
     'بكالوريوس علوم الحاسب، UVCE بنغالورو · المعدل 9.09 · منحة سيمنس', '«يفوق التوقعات» في 2025 و2026',
-    'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند والشرق الأوسط (الخليج)']],
+    'الإنجليزية، الهندية، Kannada، Telugu', 'بنغالورو، الهند · منفتح على فرص العمل في الهند والشرق الأوسط (الخليج)',
+    'فترة الإشعار 60 يومًا · هندي الجنسية بجواز سفر ساري · مستعد للانتقال بتأشيرة عمل يكفلها صاحب العمل']],
   ['#quick .q-actions > *', ['تنزيل السيرة الذاتية', 'نسخ البريد', 'واتساب', null]],
 ];
 const AR = AR_SRC.flatMap(([sel, ar]) => Array.isArray(ar)

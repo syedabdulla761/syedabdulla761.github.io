@@ -135,7 +135,11 @@ if (isTouch) addEventListener('deviceorientation', e => {
 const flipCard = () => { drag = { start: angle }; settle(Math.round(angle / 180) * 180 + 180); drag = null; };
 // QR code (qrcode-generator, loaded globally) → portfolio URL
 try {
-  const qr = window.qrcode(0, 'M'); qr.addData('https://syedabdulla761.github.io/'); qr.make();
+  // A vCard, not the site URL: whoever scans it is already here — give them a way to keep in touch
+  const VCARD = ['BEGIN:VCARD', 'VERSION:3.0', 'N:Abdulla;Syed;;;', 'FN:Syed Abdulla', 'TITLE:Full-Stack Software Engineer', 'ORG:insightsoftware',
+    'TEL;TYPE=CELL:+918867618049', 'EMAIL:syedabdulla761@gmail.com', 'URL:https://www.linkedin.com/in/syed-abdulla-6467311b6/',
+    'URL:https://syedabdulla761.github.io/', 'ADR:;;;Bengaluru;;;India', 'END:VCARD'].join('\r\n');
+  const qr = window.qrcode(0, 'L'); qr.addData(VCARD); qr.make();
   $('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
 } catch { $('qr').textContent = 'syedabdulla761.github.io'; }
 

@@ -52,6 +52,30 @@ try {
     # 4) Cut filler
     Swap ' Key contributor to the broader product unification initiative.' ''
 
+    # 5) Release Maintenance: the whole line was accent-highlighted — keep emphasis on the two numbers only
+    foreach ($p in $d.Paragraphs) {
+      if ($p.Range.Text -like 'Release Maintenance:*') {
+        $lbl = $d.Range($p.Range.Start, $p.Range.Start + 'Release Maintenance:'.Length)
+        $body = $d.Range($lbl.End, $p.Range.End - 1)
+        $plain = $d.Paragraphs | Where-Object { $_.Range.Text -like 'Hackathon Win:*' } | Select-Object -First 1
+        $body.Font.Bold = 0; $body.Font.Color = $plain.Range.Characters.Last.Previous().Font.Color
+        foreach ($t in @('305 Jira tickets', '89 backports')) {
+          $r = $d.Range($body.Start, $body.End); if ($r.Find.Execute($t)) { $r.Font.Bold = 1; $r.Font.Color = $accent }
+        }
+        break
+      }
+    }
+
+    # 6) Availability line (both variants; GCC adds nationality / passport / relocation)
+    $langs = $null; foreach ($p in $d.Paragraphs) { if ($p.Range.Text -like 'Languages:*') { $langs = $p } }
+    $text = if ($variant -eq 'GCC') { 'Availability: Indian national (valid passport)  |  Notice period: 60 days  |  Ready to relocate on an employer-sponsored work visa' } else { 'Availability: Notice period: 60 days  |  Open to Bengaluru, other Indian cities and remote roles' }
+    $endPos = $langs.Range.End - 1
+    $d.Range($endPos, $endPos).InsertAfter([string][char]13 + $text)
+    $start = $endPos + 1
+    $av = $d.Range($start, $start + $text.Length)
+    $av.Font.Color = $langs.Range.Characters.First.Font.Color
+    $d.Range($start, $start + 'Availability:'.Length).Font.Bold = 1
+
     if ($variant -eq 'GCC') {
       # Photo-left header: name / title / contact sit to the right of a round headshot
       Swap 'Software Engineer  |  Full-Stack  |  React · TypeScript · Java · Spring Boot' 'Full-Stack Software Engineer  |  React · TypeScript · Java · Spring Boot  |  Open to GCC relocation'

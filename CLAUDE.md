@@ -32,6 +32,7 @@ Read this whole file before changing anything. It records what was built, why, w
 - Other metrics: −42% grid bundle, 130K-point chart crash fix, 89 backports / 11 releases, +40% WCAG, 150+ agent commits reviewed, 0 sprint spillovers, CGPA 9.09, Siemens Scholar, 12th 96.16%, 10th 96.48%, "Exceeds Expectations" 2025 & 2026.
 - Contact: syedabdulla761@gmail.com · +91 88676 18049 (WhatsApp) · LinkedIn https://www.linkedin.com/in/syed-abdulla-6467311b6/ · GitHub https://github.com/syedabdulla761
 - Name in Arabic: **سيد عبدالله**.
+- Availability: **Indian national with a valid passport** (never worked abroad, no Gulf visa — GCC roles mean an employer-sponsored work visa), **60-day notice period**.
 
 ## 4. Architecture (no build step)
 
@@ -41,7 +42,7 @@ Read this whole file before changing anything. It records what was built, why, w
 | `style.css` | All styles; tokens in `:root`; Arabic/RTL rules under `html[lang=ar]` / `[dir=rtl]` |
 | `main.js` (ES module) | Three.js scene: 16K particles desktop / 12K mobile morphing between shapes per section, bloom (UnrealBloomPass), gestures (tap = shockwave, hold = black hole, drag = orbit), gyro parallax, WebAudio sound (harp strum, scroll filter, rumble), reveals/counters/scramble, Lenis, i18n (`AR_SRC`), ⌘K palette (`ACTIONS`), cursor. Exposes `window.SA` (event bus `SA.emit/on`, `tone/pluck/boom`, `setShape`, `shockwave`, `scrollTo`, `actions`, `toast`, …) |
 | `extras.js` (module, loads after main) | Live tiles (IST clock/status, Open-Meteo weather, visitor-timezone overlap, career counter), holographic card (drag/flick spin, QR via `qrcode-generator`), exploration game (8 hidden bugs on real content + 14 achievements, progress in `localStorage` key `sa-progress-v1`), Playground screen carousel |
-| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v10`) on every deploy.** |
+| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v11`) on every deploy.** |
 | `img/` | Playground screenshots (WebP), `playground-themes.gif`, headshot `syed.webp/.jpg` (square) + `syed-round.png` (résumé). Source photos (`mypicproff.png` = chosen, blazer; `OrigPic.jpg`) are git-ignored and stay local |
 | `Syed_Abdulla_Resume.pdf/.docx` | Résumé served by the site (generated from v14, see §6) |
 | `Syed_Abdulla.vcf`, `manifest.webmanifest`, `icon-*.png`, `favicon.svg`, `og.png` | Contact card, PWA, icons, link preview |
@@ -85,7 +86,8 @@ Browser tests use `puppeteer-core` driving installed Edge (headless, `--enable-u
 **Open items:**
 1. ~~Photo~~ — done 2026-10-11 (blazer version; About section, 30-sec summary, business card, og.png, GCC résumé).
 2. ~~og.png~~ — regenerated with photo + Playground line.
-2b. Ask the user for GCC-CV details if they want them: nationality, notice period, visa status (common on Gulf CVs; not invented).
+2b. ~~GCC-CV details~~ — done: availability line on both résumés + 30-sec summary. The card QR encodes a **vCard** (scan → save contact), not the site URL.
+2c. Biggest résumé upgrade left: 1–2 *business-outcome* numbers (Playground adoption, sales usage, time saved) — ask the user; never invent.
 3. User should **pin `syedabdulla761.github.io`** on their GitHub profile (old coursework repos were made private).
 4. Optional: native-speaker review of the Arabic.
 

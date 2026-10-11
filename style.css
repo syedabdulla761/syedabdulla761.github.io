@@ -294,7 +294,7 @@ body{touch-action:pan-y pinch-zoom}
 #qr svg{width:100%;height:100%;display:block}
 .hc-back-t{position:relative;z-index:1}
 .hc-scan{font-family:var(--display);font-weight:700;font-size:clamp(15px,4vw,19px);line-height:1.2}
-.hc-url{font-family:var(--mono);font-size:11px;color:var(--gold);margin-top:8px;word-break:break-all}
+.hc-url{font-family:var(--mono);font-size:10.5px;line-height:1.5;color:var(--gold);margin-top:8px}
 .holo-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .holo-actions .btn{padding:10px 18px;font-size:13px}
 
