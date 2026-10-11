@@ -18,6 +18,7 @@ Read this whole file before changing anything. It records what was built, why, w
 
 - **No immersive scroll effects.** Tried and rejected as overkill: warp-speed star streaks, tilted 3D section layers, and a full "tunnel" scroll (Singularity-style). Scrolling must stay a normal page; only gentle Lenis smoothing on desktop + a slow star drift.
 - **Don't add a light/dark toggle** — the glow/bloom identity depends on the dark background (user agreed).
+- **The exploration game is desktop-only** (`GAME` flag in extras.js → `html.no-game` hides HUD, toasts, hidden bugs and the exploration tile on phones/touch). Phones were too cluttered with it.
 - **Feature-light over feature-heavy.** Already removed: hidden terminal, "stats for nerds" + "last deployed" tiles, vertical shape label, separate bug-squash mini-game, card flip button.
 - **Arabic is optional** — keep everyday Arabic; keep industry terms (backports, sprints, breaking changes, Frontend/Backend, job titles, product names) in **English**. Don't use dictionary coinages.
 - Be accurate about claims; numbers below are the source of truth.
@@ -40,8 +41,8 @@ Read this whole file before changing anything. It records what was built, why, w
 | `style.css` | All styles; tokens in `:root`; Arabic/RTL rules under `html[lang=ar]` / `[dir=rtl]` |
 | `main.js` (ES module) | Three.js scene: 16K particles desktop / 12K mobile morphing between shapes per section, bloom (UnrealBloomPass), gestures (tap = shockwave, hold = black hole, drag = orbit), gyro parallax, WebAudio sound (harp strum, scroll filter, rumble), reveals/counters/scramble, Lenis, i18n (`AR_SRC`), ⌘K palette (`ACTIONS`), cursor. Exposes `window.SA` (event bus `SA.emit/on`, `tone/pluck/boom`, `setShape`, `shockwave`, `scrollTo`, `actions`, `toast`, …) |
 | `extras.js` (module, loads after main) | Live tiles (IST clock/status, Open-Meteo weather, visitor-timezone overlap, career counter), holographic card (drag/flick spin, QR via `qrcode-generator`), exploration game (8 hidden bugs on real content + 14 achievements, progress in `localStorage` key `sa-progress-v1`), Playground screen carousel |
-| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v9`) on every deploy.** |
-| `img/` | Playground screenshots (WebP) + `playground-themes.gif` (theme-switching capture) |
+| `sw.js` | Network-first service worker. **Bump `CACHE` (currently `sa-portfolio-v10`) on every deploy.** |
+| `img/` | Playground screenshots (WebP), `playground-themes.gif`, headshot `syed.webp/.jpg` (square) + `syed-round.png` (résumé). Source photos (`mypicproff.png` = chosen, blazer; `OrigPic.jpg`) are git-ignored and stay local |
 | `Syed_Abdulla_Resume.pdf/.docx` | Résumé served by the site (generated from v14, see §6) |
 | `Syed_Abdulla.vcf`, `manifest.webmanifest`, `icon-*.png`, `favicon.svg`, `og.png` | Contact card, PWA, icons, link preview |
 | `tools/` | Reusable scripts (résumé regeneration, Playground capture, browser tests) — see `tools/README.md` |
@@ -67,6 +68,9 @@ CDN deps: three@0.160.0 (import map, plus `three/addons/`), lenis@1.1.13, qrcode
 
 ## 6. Résumé
 
+- **Current: v15** (`tools/resume_v15.ps1`, builds from v14): `~/Downloads/Syed_Abdulla_Resume_v15.docx/.pdf` (India: centred header, no photo) and `Syed_Abdulla_Resume_v15_GCC.docx` (Middle East: round photo-left header + "Open to GCC relocation"). The **GCC version is what the site serves**. v15 rewrote the summary, tightened AG-Grid, merged the two Folder bullets, cut filler. PowerShell 5.1 needs the script saved as **UTF-8 with BOM**. If Word COM crashes it leaves an orphan WINWORD + `~$` lock file in Downloads.
+
+
 - `~/Downloads/Syed_Abdulla_Resume_v13.docx` = user's original (never edit). **v14** = current, produced by `tools/resume_v14.ps1` (Word COM): regenerates v14 from v13 with find/replace edits, LinkedIn + Portfolio header links, then exports `Syed_Abdulla_Resume.pdf` into this repo. Copy v14 to `Syed_Abdulla_Resume.docx` too. Must stay **1 page** (script prints page count).
 - Gotcha: inserting text at a hyperlink's end puts it *inside* the link — the script inserts before the paragraph mark instead.
 
@@ -79,8 +83,9 @@ Browser tests use `puppeteer-core` driving installed Edge (headless, `--enable-u
 **Done (as of 2026-10-01):** everything in §4; Playground case study; Jira-verified numbers; LinkedIn everywhere; résumé v14; Simba rename; feature trim; mobile name-overlap fix.
 
 **Open items:**
-1. **IMPORTANT — professional photo.** User will provide one. Suggested spots: hero (beside the name), 30-second summary, holographic card. Gulf recruiters expect it.
-2. **`og.png` link preview** still says "India & GCC" and lacks the Playground — regenerate (1200×630, render HTML in headless Edge) to say "India & Middle East".
+1. ~~Photo~~ — done 2026-10-11 (blazer version; About section, 30-sec summary, business card, og.png, GCC résumé).
+2. ~~og.png~~ — regenerated with photo + Playground line.
+2b. Ask the user for GCC-CV details if they want them: nationality, notice period, visa status (common on Gulf CVs; not invented).
 3. User should **pin `syedabdulla761.github.io`** on their GitHub profile (old coursework repos were made private).
 4. Optional: native-speaker review of the Arabic.
 

@@ -4,6 +4,10 @@ const SA = window.SA;
 const $ = id => document.getElementById(id);
 const IST = 'Asia/Kolkata';
 const isTouch = matchMedia('(hover: none)').matches;
+// The exploration game (hidden bugs, achievements, HUD, toasts) runs on desktop only —
+// on phones the hero, nav, dock and particles already fill the screen.
+const GAME = matchMedia('(hover: hover) and (min-width: 761px)').matches;
+document.documentElement.classList.toggle('no-game', !GAME);
 const isAr = () => document.documentElement.lang === 'ar';
 
 /* ============ Timezone helpers ============ */
@@ -182,6 +186,7 @@ function renderHud(pulse) {
   if (pulse) { hud.classList.remove('pulse'); void hud.offsetWidth; hud.classList.add('pulse'); }
 }
 function popCard(html, cls = '', ms = 3800) {
+  if (!GAME) return;
   const el = document.createElement('div');
   el.className = 'ach-toast ' + cls; el.innerHTML = html;
   achStack.appendChild(el);
@@ -189,7 +194,7 @@ function popCard(html, cls = '', ms = 3800) {
   setTimeout(() => { el.classList.remove('in'); setTimeout(() => el.remove(), 500); }, ms);
 }
 function unlock(id) {
-  if (prog.a.includes(id)) return;
+  if (!GAME || prog.a.includes(id)) return;
   const a = ACH.find(x => x.id === id); if (!a) return;
   const before = level(xp());
   prog.a.push(id); save();
@@ -209,7 +214,7 @@ Object.keys(secAch).forEach(id => sio.observe($(id)));
 // Plant the bugs
 const bugHost = h => h.startsWith('#') ? document.querySelector(h) : [...document.querySelectorAll('#work .card')].find(c => c.textContent.includes(h));
 const BUG_ICONS = ['🐞', '🪲', '🐛', '🦗'];
-BUGS.forEach((b, i) => {
+if (GAME) BUGS.forEach((b, i) => {
   if (prog.b.includes(i)) return;
   const host = bugHost(b.host); if (!host) return;
   host.classList.add('bug-host');
@@ -262,16 +267,17 @@ renderHud(false);
 /* ============ Gesture hint (first visit) ============ */
 const hint = $('ghint');
 setTimeout(() => hint.classList.add('show'), 2600);
-setTimeout(() => hint.classList.remove('show'), 11000);
+setTimeout(() => hint.classList.remove('show'), isTouch ? 6000 : 11000);
 hint.addEventListener('click', () => hint.classList.remove('show'));
 
 /* ============ Palette entries ============ */
 SA.actions.push(
-  { g: 'Play', i: '🏆', l: 'Achievements & hidden bugs', la: 'الإنجازات والأخطاء المخفية', k: 'game progress xp level', run: openAch },
+  GAME && { g: 'Play', i: '🏆', l: 'Achievements & hidden bugs', la: 'الإنجازات والأخطاء المخفية', k: 'game progress xp level', run: openAch },
   { g: 'Play', i: '💳', l: 'Flip the holographic card', la: 'اقلب بطاقة التعريف', k: 'business card qr', run: () => { SA.scrollTo($('contact')); setTimeout(flipCard, 800); } },
   { g: 'Play', i: '📇', l: 'Save contact to phone (vCard)', la: 'احفظ جهة الاتصال في هاتفك (vCard)', k: 'vcf contact save', run: () => { location.href = 'Syed_Abdulla.vcf'; } },
   { g: 'Play', i: '📡', l: 'Live from Bengaluru', la: 'مباشرة من بنغالورو', k: 'weather time now live', run: () => SA.scrollTo($('live')) },
 );
+SA.actions.splice(0, SA.actions.length, ...SA.actions.filter(Boolean));
 
 SA.on('langchange', () => { $('lv-tz').textContent = cityOf(visitorTz); tickLive(); renderWx(); renderHud(false); });
 
